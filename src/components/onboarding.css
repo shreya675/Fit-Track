@@ -1,0 +1,96 @@
+/* Modal overlay (background) */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+/* Modal box */
+.modal {
+  background-color: rgba(38, 174, 198, 0.313);
+  border-radius: 20px;
+  padding: 40px;
+  width: 450px;
+  max-width: 90%;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+/* Headings */
+.modal h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+/* Paragraphs */
+.modal p {
+  font-size: 16px;
+  margin-bottom: 30px;
+}
+
+/* Input and select styles */
+.modal input,
+.modal select {
+  width: 80%;
+  padding: 10px 12px;
+  margin: 10px 0;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+/* Start, Next, Finish buttons */
+.modal button {
+  margin-top: 20px;
+  background-color: #007bff;
+  color: white;
+  padding: 12px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.modal button:hover {
+  background-color: #0056b3;
+}
+
+/* Gender option block layout */
+.button-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  margin-top: 20px;
+}
+
+/* Individual gender buttons */
+.option-btn {
+  width: 70%;
+  padding: 12px 0;
+  font-size: 16px;
+  border: 2px solid #ccc;
+  border-radius: 12px;
+  background-color: #f0f0f0;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.option-btn:hover {
+  background-color: #e6e6e6;
+}
+
+/* Selected state */
+.option-btn.selected {
+  border-color: #007bff;
+  background-color: #d6e8ff;
+  font-weight: 600;
+}

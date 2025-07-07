@@ -1,0 +1,88 @@
+.workouts-page {
+  margin-left: 240px; /* accounts for fixed sidebar width */
+  padding: 30px;
+  
+  min-height: 100vh;
+  width:1250px;
+  box-sizing: border-box;
+  color: #fff;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  font-size: 32px;
+  font-weight: bold;
+}
+
+.add-btn {
+  background-color: #f2b705;
+  color: #000;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.add-btn:hover {
+  background-color: #d39e04;
+}
+
+.workout-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.workout-card-horizontal {
+  background-color: #0f172a;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 6px solid #f2b705;
+  padding: 20px 25px;
+  border-radius: 12px;
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.workout-card-horizontal:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(242, 183, 5, 0.4);
+}
+
+.workout-info h3 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  color: #f2b705;
+}
+
+.workout-info p {
+  margin: 4px 0;
+  font-size: 15px;
+  color: #ddd;
+}
+
+.card-btn {
+  background-color: transparent;
+  border: 2px solid #f2b705;
+  color: #f2b705;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.card-btn:hover {
+  background-color: #f2b705;
+  color: #000;
+}
