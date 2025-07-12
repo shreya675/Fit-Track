@@ -42,15 +42,18 @@ const Settings = () => {
         <div className="settings-card">
           <h3>Support</h3>
           <p>Need help or have feedback?</p>
-          <button className="support-btn">Contact Us</button>
-          <button className="support-btn">FAQs</button>
+          <div className="support-btn-group">
+            <button className="support-btn">Contact Us</button>
+            <button className="support-btn">FAQs</button>
+          </div>
         </div>
+
 
         {/* ⚠️ Account Actions */}
         <div className="settings-card">
           <h3>Account</h3>
-          <button className="danger-button">Logout</button>
-          <button className="danger-button">Delete Account</button>
+          <button className="dangerrr-button">Logout</button>
+          <button className="dangerrr-button">Delete Account</button>
         </div>
       </div>
     </div>

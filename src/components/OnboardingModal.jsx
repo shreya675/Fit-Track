@@ -3,6 +3,15 @@
 import React, { useState, useContext } from "react";
 import "./onboarding.css"; // optional CSS file
 import { UserContext } from "../context/UserContext";
+import welcomeImg from '../assets/welcome.svg';
+import maleIcon from '../assets/man.png';
+import femaleIcon from '../assets/woman.png';
+import Happy from '../assets/happy.png';
+import weight from '../assets/weight.png'; 
+import height from '../assets/height.png'; 
+import sleep from "../assets/sleep.png"; // adjust path if needed
+
+
 
 
 
@@ -48,6 +57,7 @@ const OnboardingModal = ({ onFinish }) => {
         {step === 0 && (
           <div>
             <h2>Welcome to FitTrack</h2>
+            <img src={welcomeImg} alt="Welcome" className="welcome-icon" />
             <p>Let’s set up your fitness preferences</p>
             <button onClick={handleNext}>Start</button>
           </div>
@@ -55,45 +65,52 @@ const OnboardingModal = ({ onFinish }) => {
 
         {step === 1 && (
           <div>
-            <h2>What’s your gender?</h2>
-            <div className="button-row">
+            <div className="vertical-button-group">
+              <h2> What's Your Gender?</h2>
               <button
-                  className={`option-btn ${selectedGender === "Male" ? "selected" : ""}`}
-                  onClick={() =>{
-                    setSelectedGender("Male");
-                    handleChange("gender", "Male");
-                    handleNext(); // move to next step
-                  } }>
-                  Male
+                className={`option-btn-vertical ${selectedGender === "Male" ? "selected" : ""}`}
+                onClick={() => {
+                  setSelectedGender("Male");
+                  handleChange("gender", "Male");
+                  handleNext();
+                }}
+              >
+                <span>Male</span>
+                <img src={maleIcon} alt="Male" />
               </button>
 
               <button
-                  className={`option-btn ${selectedGender === "Female" ? "selected" : ""}`}
-                  onClick={() => {
-                    setSelectedGender("Female");
-                    handleChange("gender", "Female");
-                    handleNext(); // move to next step
-                  }}>
-                  Female
-                </button>
+                className={`option-btn-vertical ${selectedGender === "Female" ? "selected" : ""}`}
+                onClick={() => {
+                  setSelectedGender("Female");
+                  handleChange("gender", "Female");
+                  handleNext();
+                }}
+              >
+                <span>Female</span>
+                <img src={femaleIcon} alt="female" />
+              </button>
 
-
-                <button
-                    className={`option-btn ${selectedGender === "Others" ? "selected" : ""}`}
-                    onClick={() =>{
-                      setSelectedGender("Others");
-                      handleChange("gender", "Others");
-                      handleNext(); // move to next step
-                    }}>
-                    Others
-                  </button>
-              </div>
+              <button
+                className={`option-btn-vertical ${selectedGender === "Others" ? "selected" : ""}`}
+                onClick={() => {
+                  setSelectedGender("Others");
+                  handleChange("gender", "Others");
+                  handleNext();
+                }}
+              >
+                <span>Others</span>
+              </button>
+            </div>
+              
           </div>
         )}
 
         {step === 2 && (
           <div>
-            <h2>Your Name?</h2>
+            <h2>Your Name? <img src={Happy} alt="Happy Face" className="emoji-icon" />
+            </h2>
+            
             <input
               type="text"
               placeholder="Enter your name"
@@ -115,21 +132,31 @@ const OnboardingModal = ({ onFinish }) => {
 
 
         {step === 3 && (
-          <div>
-            <h2>Your Age?</h2>
+          <div className="onboarding-step">
+            <h2 className="question-heading">
+              Your Age?
+            </h2>
+            
             <input
               type="number"
               placeholder="Enter your age"
               value={formData.age}
               onChange={(e) => handleChange("age", e.target.value)}
+              className="input-field"
             />
-            <button onClick={handleNext}>Next</button>
+            
+            <button className="next-btn" onClick={handleNext}>Next</button>
           </div>
         )}
 
+
         {step === 4 && (
-            <div>
-              <h2>Your Weight (in kg)?</h2>
+            <div className="onboarding-step">
+              <h2 className="question-heading">
+                Your Weight (in kg)? 
+                <img src={weight} alt="Weight Icon" className="emoji-icon" />
+              </h2>
+              
               <input
                 type="number"
                 placeholder="e.g. 60"
@@ -137,6 +164,7 @@ const OnboardingModal = ({ onFinish }) => {
                 onChange={(e) => handleChange("weight", e.target.value)}
                 className="input-field"
               />
+
               <button
                 className="next-btn"
                 onClick={() => {
@@ -148,9 +176,12 @@ const OnboardingModal = ({ onFinish }) => {
             </div>
           )}
 
+
         {step === 5 && (
             <div>
-              <h2>Your Height (in cm)?</h2>
+              <h2>Your Height (in cm)?
+                <img src={height} alt="Height Icon" className="emoji-icon" />
+              </h2>
               <input
                 type="number"
                 placeholder="e.g. 165"
@@ -170,11 +201,11 @@ const OnboardingModal = ({ onFinish }) => {
           )}
 
 
-        
         {step === 6 && (
-          <div>
-            <h2>Fitness Goal?</h2>
-            <div className="button-row">
+          <div className="onboarding-step">
+            <h2 className="question-heading">Fitness Goal?</h2>
+
+            <div className="button-column">
               {["Lose Weight", "Build Muscle", "Improve Endurance", "General Fitness"].map((goal) => (
                 <button
                   key={goal}
@@ -190,6 +221,9 @@ const OnboardingModal = ({ onFinish }) => {
             </div>
           </div>
         )}
+
+        
+          
 
         {step === 7 && (
           <div>
@@ -214,27 +248,29 @@ const OnboardingModal = ({ onFinish }) => {
         )}
 
         {step === 8 && (
-          <div>
-            <h2>How much do you sleep every night?</h2>
-              <div className="button-row">
-                {["More than 8 Hours", "7-8 Hours", "6-7 Hours", "Less than 6 Hours"].map((sleep) => (
-                  <button
-                    key={sleep}
-                    className={`option-btn ${formData.sleep === sleep ? "selected" : ""}`}
-                    onClick={() => {
-                      handleChange("sleep", sleep);
-                     handleNext();
+          <div className="onboarding-step">
+            <h2 className="question-heading">
+              How much do you sleep every night?
+              <img src={sleep} alt="Sleep Icon" className="emoji-icon" />
+            </h2>
 
-                      
-                    }}
+                  <div className="button-column">
+                    {["More than 8 Hours", "7-8 Hours", "6-7 Hours", "Less than 6 Hours"].map((sleep) => (
+                      <button
+                        key={sleep}
+                        className={`option-btn ${formData.sleep === sleep ? "selected" : ""}`}
+                        onClick={() => {
+                          handleChange("sleep", sleep);
+                          handleNext();
+                        }}
+                      >
+                        {sleep}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-                  >
-                    {sleep}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           {step === 9 && (
             <div className="popup-content">

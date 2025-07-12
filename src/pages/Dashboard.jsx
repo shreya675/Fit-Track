@@ -7,6 +7,8 @@ import { useAuth } from "../context/AuthContext"; // however you access current 
 import './Dashboard.css';
 import OnboardingModal from '../components/OnboardingModal';
 import { UserContext } from "../context/UserContext";
+import WeeklyChart from '../components/Weeklychart';
+import GoalProgressChart from "../components/GoalProgressChart";
 
 const Dashboard = () => {
   const { userData, updateUserData } = useContext(UserContext);
@@ -91,59 +93,62 @@ const Dashboard = () => {
       <div className="main-content">
         <div className="top-cards">
           <div className="card profile-card">
-            <div className="avatar"></div>
-            {userProfile ? (
-  <>
-              <h3>{userProfile.name || "User"}</h3>
-              <p>Fitness Enthusiast</p>
-              <div className="info-grid">
-                <div><strong>{userProfile.age}</strong><br />Age</div>
-                <div><strong>{userProfile.weight}</strong><br />Weight (kg)</div>
-                <div><strong>{userProfile.height}</strong><br />Height (cm)</div>
-                <div><strong>{userProfile.fitnessGoal}</strong><br />Goal</div>
-              </div>
-            </>
-          ) : (
-            <p>Loading profile...</p>
-          )}
+              <div className="avatar"></div>
+              {userProfile ? (
+              <>
+                <h3>{userProfile.name || "User"}</h3>
+                <p>Fitness Enthusiast</p>
+                <div className="info-grid">
+                  <div><strong>{userProfile.age}</strong><br />Age</div>
+                  <div><strong>{userProfile.weight}</strong><br />Weight (kg)</div>
+                  <div><strong>{userProfile.height}</strong><br />Height (cm)</div>
+                  <div><strong>{userProfile.fitnessGoal}</strong><br />Goal</div>
+                </div>
+              </>
+            ) : (
+              <p>Loading profile...</p>
+            )}
 
           </div>
 
           <div className="card goals-card">
-            <h4>Daily Goals</h4>
+            <h2 className="goals-heading">Daily Goals</h2>
               <div className="goal-item">Calories Burned
                 <span>1500 / {userData?.dailyCalories || '0'}</span>
 
               </div>
 
-            <div className="progress-bar">
-                <div style={{ width: `${Math.min((1500 / (userData?.dailyCalories || 1)) * 100, 100)}%` }}></div>
-            </div>
+              <div className="progress-bar">
+                  <div style={{ width: `${Math.min((1500 / (userData?.dailyCalories || 1)) * 100, 100)}%` }}></div>
+              </div>
 
-            <div className="goal-item">
-                Steps Taken 
-                <span>500 / {userData?.dailySteps || '0'}</span>
-            </div>
+              <div className="goal-item">
+                  Steps Taken 
+                  <span>500 / {userData?.dailySteps || '0'}</span>
+              </div>
+
               <div className="progress-bar">
                 <div style={{ width: `${Math.min((500 / (userData?.dailySteps || 1 )) * 100, 100)}%` }}></div>
               </div>
                     
-            <div className="goal-item">
-              Workout Time 
-              <span>45 / {userData?.dailyWorkout || '0'}</span>
-            </div>
-            <div className="progress-bar">
-              <div style={{ width: `${Math.min((45 / (userData?.dailyWorkout || 1)) * 100, 100) }%` }}></div>
-            </div>
+              <div className="goal-item">
+                Workout Time 
+                <span>45 / {userData?.dailyWorkout || '0'}</span>
+              </div>
+
+              <div className="progress-bar">
+                <div style={{ width: `${Math.min((45 / (userData?.dailyWorkout || 1)) * 100, 100) }%` }}></div>
+              </div>
 
           </div>
 
           <div className="card goals-card">
-            <h4>Weekly Goals</h4>
-             <div className="goal-item">
+              <h2 className="goals-heading">Weekly Goals</h2>
+                <div className="goal-item">
                   Calories Burned 
                   <span>1500 / {userData?.weeklyCalories || '0'}</span>
                 </div>
+
                 <div className="progress-bar">
                   <div style={{ width: `${Math.min((1500 / (userData?.weeklyCalories || 1)) * 100 ,100)}%` }}></div>
                 </div>
@@ -152,6 +157,7 @@ const Dashboard = () => {
                   Steps Taken 
                   <span>500 / {userData?.weeklySteps || '0'}</span>
                 </div>
+
                 <div className="progress-bar">
                   <div style={{ width: `${ Math.min((500 / (userData?.weeklySteps ||1)) * 100 ,100 )}%` }}></div>
                 </div>
@@ -160,13 +166,14 @@ const Dashboard = () => {
                   Workout Time 
                   <span>45 / {userData?.weeklyWorkout || '0'}</span>
                 </div>
+
                 <div className="progress-bar">
                   <div style={{ width: `${Math.min((45 / (userData?.weeklyWorkout || 1)) * 100 ,100) }%` }}></div>
                 </div>
+
           </div>
         </div>
-
-        <div className="bottom-section">
+        
           <div className="card workout-history">
             <h4>Workout History</h4>
             <table>
@@ -191,18 +198,13 @@ const Dashboard = () => {
           <div className="bottom-grid">
               {/* Weight Progress */}
               <div className="card">
-                <h4>Weight Progress</h4>
-                <div className="chart-placeholder">
-                  <img src="/weight-chart.png" alt="Weight Progress" />
-                </div>
+               <GoalProgressChart/>
               </div>
 
               {/* Weekly Progress */}
               <div className="card">
-                <h4>Weekly Progress</h4>
-                <div className="chart-placeholder">
-                  <img src="/weekly-chart.png" alt="Weekly Progress" />
-                </div>
+                {/*<h3>Weekly Progress</h3>*/}
+                <WeeklyChart />
               </div>
 
               {/* Exercise Suggestions */}
@@ -232,22 +234,15 @@ const Dashboard = () => {
               </div>
             </div>
 
-          
-        </div>
       </div>
       {showPopup && (
-        <OnboardingPopup
-          setShowPopup={setShowPopup}
+        <OnboardingModal
+          onFinish={handleFinish} // ✅ pass the function that setsShowPopup(false)
           updateUserData={updateUserData}
           currentUser={currentUser}
         />
+
       )}
-
-
-
-
-
-
     </div>
   );
 };

@@ -1,8 +1,8 @@
 import React from 'react';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, provider } from '../firebase';
-import './Login.css'; // (we’ll create this next)
-//import logo from '../assets/logo.png'; // optional: add a logo for FitTrack
+import './Login.css';
+import fitnessImage from '../assets/fitness.svg'; // add your image here
 
 const Login_temp = ({ onLogin }) => {
   const handleSignIn = async () => {
@@ -17,9 +17,14 @@ const Login_temp = ({ onLogin }) => {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h1 className="app-name">FitTrack</h1>
-        <p>Track your fitness journey with ease 💪</p>
-        <button className="login-button" onClick={handleSignIn}>
+        <img src={fitnessImage} alt="Fitness" className="login-image" />
+        <h1 className="app-name">Fit<span>Track</span></h1>
+        <p className="tagline">Track your fitness journey with ease 💪</p>
+        <button className="google-login-btn" onClick={handleSignIn}>
+          <img
+            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+            alt="Google"
+          />
           Sign in with Google
         </button>
       </div>

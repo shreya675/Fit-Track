@@ -1,17 +1,23 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import './sidebar.css';
 
-function Sidebar() {
+function Sidebar({ isOpen, setIsOpen }) {
+  const handleLinkClick = () => {
+    if (window.innerWidth <= 768 && setIsOpen) {
+      setIsOpen(false);
+    }
+  };
+
   return (
-    <div className="sidebar">
+    <div className={`sidebar ${isOpen ? 'open' : ''}`}>
       <h2>FitnessPro</h2>
       <ul>
-        <li><Link to="/dashboard">Dashboard</Link></li>
-        <li><Link to="/workouts">Workouts</Link></li>
-        <li><Link to="/nutrition">Nutrition</Link></li>
-        <li><Link to="/settings">Settings</Link></li>
-        <li><Link to="/profile" >Profile</Link></li>
+        <li><NavLink to="/dashboard" onClick={handleLinkClick}>Dashboard</NavLink></li>
+        <li><NavLink to="/workouts" onClick={handleLinkClick}>Workouts</NavLink></li>
+        <li><NavLink to="/nutrition" onClick={handleLinkClick}>Nutrition</NavLink></li>
+        <li><NavLink to="/settings" onClick={handleLinkClick}>Settings</NavLink></li>
+        <li><NavLink to="/profile" onClick={handleLinkClick}>Profile</NavLink></li>
       </ul>
     </div>
   );
