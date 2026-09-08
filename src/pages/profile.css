@@ -1,0 +1,247 @@
+body {
+  color: #ffffff;
+  font-family: "Segoe UI", sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow-x: hidden;
+}
+
+.profile-section {
+  min-height: 100vh;
+  padding: 2rem;
+  background:
+    radial-gradient(circle at top right, rgba(0, 198, 255, 0.2), transparent 30rem),
+    linear-gradient(135deg, #111820 0%, #14252c 52%, #101820 100%);
+  color: #f7fbfc;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.profile-state {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #101820;
+  color: #d8ecef;
+  font-size: 1.05rem;
+}
+
+.profile-hero {
+  align-items: center;
+  display: flex;
+  gap: 1.25rem;
+  margin: 0 auto 1.5rem;
+  max-width: 1180px;
+}
+
+.profile-avatar {
+  align-items: center;
+  background: linear-gradient(135deg, #00c6ff, #4db36f);
+  border-radius: 8px;
+  color: #061015;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 2.4rem;
+  font-weight: 800;
+  height: 86px;
+  justify-content: center;
+  width: 86px;
+}
+
+.profile-hero span {
+  color: #69d2df;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.profile-hero h1 {
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  line-height: 1;
+  margin: 0.25rem 0 0.45rem;
+}
+
+.profile-hero p {
+  color: #b9cdd3;
+  margin: 0;
+}
+
+.profile-metrics,
+.profile-grid {
+  margin: 0 auto;
+  max-width: 1180px;
+}
+
+.profile-metrics {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 1rem;
+}
+
+.profile-metrics > div,
+.profile-panel {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.18);
+}
+
+.profile-metrics > div {
+  min-height: 150px;
+  padding: 1.1rem;
+}
+
+.profile-metrics svg,
+.detail-grid svg,
+.target-list svg {
+  color: #69d2df;
+}
+
+.profile-metrics span,
+.snapshot-row span,
+.detail-grid span,
+.target-list span,
+.latest-profile-session span {
+  color: #b9cdd3;
+  display: block;
+  font-size: 0.88rem;
+  margin-top: 0.7rem;
+}
+
+.profile-metrics strong {
+  display: block;
+  font-size: 2rem;
+  margin-top: 0.2rem;
+}
+
+.profile-metrics small,
+.snapshot-row small,
+.latest-profile-session small {
+  color: #8fa8ae;
+}
+
+.profile-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-panel {
+  padding: 1.25rem;
+}
+
+.profile-panel h2 {
+  color: #ffffff;
+  font-size: 1.2rem;
+  margin: 0 0 1rem;
+}
+
+.detail-grid,
+.target-list {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.detail-grid div,
+.target-list div {
+  background: rgba(0, 0, 0, 0.16);
+  border-radius: 8px;
+  padding: 0.9rem;
+}
+
+.detail-grid strong,
+.target-list strong {
+  color: #ffffff;
+  display: block;
+  font-size: 1.15rem;
+  margin-top: 0.2rem;
+}
+
+.wide-panel {
+  grid-column: 1 / -1;
+}
+
+.snapshot-row {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.snapshot-row div,
+.latest-profile-session {
+  background: rgba(0, 0, 0, 0.16);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.snapshot-row strong,
+.latest-profile-session strong {
+  display: block;
+  font-size: 1.35rem;
+  margin: 0.25rem 0;
+}
+
+.latest-profile-session {
+  margin-top: 0.75rem;
+}
+
+.latest-profile-session.empty {
+  color: #b9cdd3;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 900px) {
+  .profile-metrics,
+  .profile-grid,
+  .snapshot-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-section {
+    padding: 4.5rem 1rem 1rem;
+  }
+
+  .profile-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .profile-metrics,
+  .profile-grid,
+  .detail-grid,
+  .target-list,
+  .snapshot-row {
+    grid-template-columns: 1fr;
+  }
+}

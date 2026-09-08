@@ -1,0 +1,16 @@
+.steps-chart-container {
+ 
+ 
+  border-radius: 12px;
+  color: #ffffff;
+ 
+  
+}
+
+.chart-title {
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 800;
+  
+  color: #ffffff;
+}
