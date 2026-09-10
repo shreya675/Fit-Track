@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function ownsAccount(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    match /users/{userId} {
+      allow read, write: if ownsAccount(userId);
+      match /workoutSessions/{sessionId} {
+        allow read, write: if ownsAccount(userId);
+      }
+      match /meals/{mealId} {
+        allow read, write: if ownsAccount(userId);
+      }
+      match /workouts/{workoutId} {
+        allow read, write: if ownsAccount(userId);
+      }
+    }
+  }
+}

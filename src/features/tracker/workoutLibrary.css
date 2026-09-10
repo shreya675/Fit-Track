@@ -1,0 +1,16 @@
+.workout-filter-row{display:flex;align-items:end;gap:14px;flex-wrap:wrap;margin-bottom:15px}
+.workout-filter-row label{display:flex;flex-direction:column;gap:7px;font-size:13px;color:#5f6b62;flex:1;min-width:140px}
+.workout-filter-row select{background:white;border:1px solid #dce2db;border-radius:5px;padding:10px;font-size:14px;min-height:41px;color:#334b3c}
+.favorites-filter{min-height:41px}.favorites-filter.selected{background:#edf3e7;border-color:#839975}
+.workout-results{display:flex;justify-content:space-between;align-items:center;color:#74816e;font-size:13px;margin:20px 0}
+.favorite-status{font-size:13px;padding:12px 15px;background:#edf3e7;border-radius:5px;margin-bottom:18px}
+.routine-card-heading{display:flex;align-items:center;gap:10px;padding:18px 20px 0;font-size:12px;color:#78856e}
+.routine-card-heading .favorite-button{margin-left:auto}.favorite-button.saved{color:#a14b50}
+.library-card{display:flex;flex-direction:column}.library-card .workout-card-body{flex:1;display:flex;flex-direction:column;padding-top:12px}
+.library-card .workout-meta{flex-wrap:wrap;gap:10px;font-size:12px;margin:17px 0}
+.library-card .routine-equipment{font-size:12px;min-height:0;margin-bottom:12px;line-height:1.7}
+.routine-equipment strong{display:block;color:#65725e;font-weight:600}
+.library-card .routine-last-session{font-size:12px;min-height:0;margin-top:auto;margin-bottom:16px;color:#8a9383}
+.session-instructions{background:#f1f4ed;padding:12px 14px;font-size:13px;line-height:1.7;border-radius:5px;margin-bottom:16px}
+@media(max-width:720px){.workout-filter-row{gap:10px}.workout-filter-row label{min-width:120px}.workout-filter-row .favorites-filter{flex:1}.routine-card-heading{padding:15px 15px 0}.library-card .workout-meta{flex-direction:row}.library-card .workout-card-body{padding:15px}.routine-card-heading>span:nth-child(2){font-size:11px}}
+.history-session-notes{display:block;font-size:12px;color:#65715e;line-height:1.7;margin-top:8px;white-space:pre-wrap;overflow-wrap:anywhere}

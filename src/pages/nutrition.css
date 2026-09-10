@@ -1,0 +1,234 @@
+/* nutrition.css */
+
+/* Full-screen nutrition container beside sidebar */
+.nutrition-container {
+  /* Adjust according to your sidebar width */
+  padding: 30px 40px;
+  background: linear-gradient(to right, #0f2027, #203a43, #2c5364); /* Dark background */
+  color: #f5f5f5;
+  min-height: 100vh;
+   /* Avoid overlap with sidebar */
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+  overflow-y: auto;
+}
+
+/* Header section */
+.nutrition-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.nutrition-header h2 {
+  font-size: 32px;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.nutrition-header p {
+  color: #cccccc;
+  margin: 0;
+}
+
+/* Add Meal button */
+.add-meal-btn {
+  padding: 10px 22px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  max-width: 200px;
+  transition: background-color 0.3s ease;
+}
+
+.add-meal-btn:hover {
+  background-color: #45a049;
+}
+
+/* Input section */
+.input-section {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+}
+
+.input-section input,
+.input-section select {
+  padding: 12px;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  background: #1b1b1b;
+  color: #e0e0e0;
+  font-size: 16px;
+  flex: 1;
+  min-width: 180px;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Hover effect on inputs */
+.input-section input:hover,
+.input-section select:hover {
+  border-color: #5abf90;
+}
+
+/* Focus glow */
+.input-section input:focus,
+.input-section select:focus {
+  outline: none;
+  border-color: #66ffcc;
+  box-shadow: 0 0 6px rgba(102, 255, 204, 0.6);
+}
+
+/* Dropdown custom style (only supported browsers will reflect this) */
+.input-section select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='%23ffffff' d='M2 0L0 2h4z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  background-size: 0.6rem auto;
+}
+
+/* Override browser select dropdown popup styling if needed (limited support) */
+input::placeholder,
+select {
+  color: #cccccc;
+}
+
+/* Dropdown item styling (for supported browsers, optional) */
+select option {
+  background: #1b1b1b;
+  color: #ffffff;
+}
+
+/* For darkening dropdown on open in supported browsers */
+select:focus option {
+  background: #222;
+  color: #90ee90;
+}
+
+.quick-meals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.quick-meals button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 10px 14px;
+}
+
+.nutrition-stats {
+  display: grid;
+  grid-template-columns: 2fr repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+/* Total calories section */
+.total-calories {
+  font-size: 22px;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.meal-stat {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.meal-stat span {
+  color: #cccccc;
+  display: block;
+  font-size: 13px;
+}
+
+.meal-stat strong {
+  color: #ffffff;
+  display: block;
+  font-size: 24px;
+  margin-top: 6px;
+}
+
+/* Meal history */
+.meal-history h3 {
+  font-size: 24px;
+  margin-bottom: 18px;
+  color: #dddddd;
+}
+
+/* Meals list */
+.meals-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Individual meal card */
+.meal-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background-color: #10664e;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 17px;
+  color: #ffffff;
+  
+}
+
+.meal-card button {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 8px 12px;
+}
+
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+  .nutrition-container {
+    margin-left: 0;
+    width: 100%;
+    padding: 20px;
+  }
+
+  .nutrition-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .nutrition-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .total-calories {
+    grid-column: 1 / -1;
+  }
+
+  .meal-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

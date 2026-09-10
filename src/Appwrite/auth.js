@@ -80,26 +80,15 @@ export class AuthService {
   }
 
   // google Auth
+  googleAuth() {
+  this.account.createOAuth2Session(
+    "google",
+    conf.redirectSuccess, // e.g., http://localhost:5173/
+    conf.redirectFailure  // e.g., http://localhost:5173/login
+  );
+}
 
-  async googleAuth() {
-    try {
-      // Initiates OAuth2 session with Google
-      this.account.createOAuth2Session(
-        "google", // Provider name 'google' for Google OAuth
-        //import.meta.env.VITE_REDIRECT_SUCCESS, // ✅ from env
-        
-        //import.meta.env.VITE_REDIRECT_FAILURE  // ✅ from env
-        // "https://fra.cloud.appwrite.io/console", // ✅ TEMP success URL (or keep localhost for testing)
-         // "https://fra.cloud.appwrite.io/console"
-        conf.redirectSuccess,
-        conf.redirectFailure
-      
-      );
-    } catch (error) {
-      console.log("Google login error::", error);
-      throw error; // Optionally re-throw the error if needed
-    }
-  }
+
 }
 
 const authService = new AuthService();
