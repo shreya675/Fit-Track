@@ -9,12 +9,14 @@ npm install
 npm run dev
 ```
 
-Open the URL printed by Vite. The app opens in a clearly labeled sample workspace; **Make it yours** clears local sample records. Local mode saves changes in this browser and is separate from signed-in accounts. Use **Export data** to download a JSON backup (import is not implemented).
+Open the URL printed by Vite. The welcome page offers **Sign in with Google** and **Explore demo**. Choosing the demo opens the sample profile; **Exit demo** returns to the welcome page. The demo choice survives refreshes in the current tab. Signed-in accounts always load their own Firebase records instead of sample data. **Make it yours** clears local sample records. Local mode saves changes in this browser and is separate from signed-in accounts. Use **Export data** to download a JSON backup (import is not implemented).
 
 ## Features
 
 - Overview with daily targets, weekly activity, workout history, streaks, and hydration controls.
 - Searchable workout library, custom routine creation/editing/deletion, exercise checklists, and an elapsed-time timer with pause/resume and a review step.
+- 14 built-in routines with equipment details; combined category, difficulty, and duration filters; duration/name sorting; saved favorites; and last-completed dates. Search also matches equipment and exercises. Favorites use local storage in demo mode and the user's Firestore profile when signed in.
+- Optional workout session notes appear in history. Custom workouts support difficulty, equipment, and instructions. Timed sessions retain the original routine ID for completion tracking.
 - Manual workout logs with dates, duration, and user-entered activity calories.
 - Food diary by date, meal categories, calories, and optional macros.
 - Progress history and configurable daily and weekly targets.
@@ -27,17 +29,28 @@ Copy `.env.example` to `.env` and supply your Firebase web app values. Enable Go
 
 Existing paths are preserved: `users/{uid}`, `workoutSessions`, `meals`, and `workouts`. Hydration and manual step values are date-keyed profile fields (`trackerWater` and `trackerSteps`). Account sync requires a working Firebase configuration and appropriate project permissions; production Google sign-in must be checked against your authorized domain.
 
+If the dashboard reports `permission-denied`, inspect **Firestore Database → Rules** in Firebase Console. The included `firestore.rules` is an owner-only access template for these four paths, including the subcollections. It has not been deployed automatically or tested against your live project. Preserve rules for any unrelated collections when incorporating this template. Use the Firebase Rules Playground to check that a matching authenticated UID can access its own paths, while another UID and an unauthenticated user are denied. Publish the corrected rules, then click **Retry loading** in FitTrack. A missing profile or an empty collection alone does not cause a permission error.
+
 ## Validation
 
 ```sh
 npm run lint
 node --test tests/data.test.js
+node tests/run-render-check.mjs
 npm run build
 ```
 
 Calculation tests cover Monday–Sunday week boundaries, date-scoped totals, duplicate-day streaks, and empty workspaces. Browser interaction tests and live Firebase sign-in are not part of this automated suite.
 
 ## Source guide
+
+### Exercise recommendations
+
+The Workouts page ranks 63 curated exercises and shows the top three using cosine similarity against a user's average completed-session feature vector. Eight equally scaled content dimensions describe strength, cardio, mobility, upper body, lower body, core, impact, and equipment involvement. These are curated descriptors, not calibrated fitness or safety scores; equipment availability and training suitability are not inferred.
+
+Each session contributes equally. Exercise IDs, exact names, aliases, and linked routine exercises resolve detailed history; older category-only entries use the category's average vector. Future and undated records are excluded. Ties use stable exercise IDs. New users see a prompt to log a workout, and sample history is explicitly labeled. Suggestions recalculate when history changes. New routine completions store checked exercise snapshots so later routine edits or deletion cannot rewrite that history. Logging a suggestion opens the existing review form and uses the existing local/Firebase session storage.
+
+Run `node --test tests/data.test.js tests/recommendations.test.js` for calculations and ranking checks, and `node tests/run-render-check.mjs` for page and recommendation-state rendering checks.
 
 - `src/App.jsx`: app shell, routes, account controls, modal orchestration.
 - `src/features/tracker/data.js`: workout library, sample records, progress calculations.
@@ -53,5 +66,19 @@ Earlier page components remain in `src/pages` for reference and are not imported
 Hero photograph: [Jakub Balon on Unsplash](https://unsplash.com/photos/runners-legs-in-motion-on-a-track-MP38AUvIilY), available under the Unsplash License. The image is served by Unsplash. DM Sans and Manrope are loaded through Google Fonts with local sans-serif fallbacks. Lucide supplies interface icons. The app retains a usable solid-color banner if the image cannot load.
 
 ## Limitations
+
+### Account entry and first-time setup
+
+The home URL always offers account entry and a demo. Visitors can create an email/password account, log in, reset a password, or use Google. An existing signed-in visitor can continue or switch accounts. Google always opens the account chooser. Demo records remain separate from account data.
+
+Signed-in users without `onboardingCompleted: true` must save a username, height in cm, weight in kg, fitness focus, and activity level before opening their dashboard. These details are stored in their own `users/{uid}` document and can be edited in My profile. Profile setup waits for that document to load and does not overwrite an unread profile. Profile saves are independent of unrelated collection failures. Unavailable account data no longer produces misleading zero totals.
+
+Firebase project setup is separate from publishing the website:
+
+1. In Firebase Authentication → Sign-in method, enable Email/Password and Google. Include the deployed hostname in Authentication → Settings → Authorized domains.
+2. Reauthenticate the Firebase CLI with `firebase login --reauth` using an account with access to `fit-track-6baa1`.
+3. Apply the owner-scoped rules using `firebase deploy --only firestore:rules --project fit-track-6baa1`. The checked-in `firebase.json` selects `firestore.rules`; it permits authenticated users to access only their own profile, workout sessions, meals, and routines.
+
+The deployment attempt on 2026-09-13 was rejected with HTTP 401 because the CLI credentials were invalid. The live rules and enabled authentication providers could not be verified. Automated rendering checks cover the account entry and profile setup states; a real create-account/login/reset/sign-out test still requires a configured Firebase project.
 
 Steps and nutrition are manually entered; there is no wearable integration or automatic food database. Activity calories are not inferred from workout duration. Targets are user-selected preferences. Local browser storage is device-specific; clearing site data removes local entries. The deployed static app needs network access for Firebase, fonts, and the hero image.

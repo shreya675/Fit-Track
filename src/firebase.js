@@ -25,3 +25,4 @@ const app = firebaseSetupError ? null : initializeApp(firebaseConfig);
 export const db = app ? getFirestore(app) : null;
 export const auth = app ? getAuth(app) : null;
 export const provider = app ? new GoogleAuthProvider() : null;
+provider?.setCustomParameters({ prompt: 'select_account' });

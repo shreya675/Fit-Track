@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { collection, doc, onSnapshot, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, onSnapshot, setDoc, deleteDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db } from '../../firebase';
 import dayjs from 'dayjs';
 import { defaults, demoData, emptyData } from './data';
+import { dataErrorMessage } from './dataErrors';
 
 const KEY = 'fittrack.local.v1';
 function readLocal() {
@@ -16,23 +17,36 @@ function readLocal() {
 export default function useTracker(user) {
   const [data, setData] = useState(() => user ? emptyData() : readLocal());
   const [error, setError] = useState('');
+  const [loadErrors, setLoadErrors] = useState({});
+  const [attempt, setAttempt] = useState(0);
   const [loading, setLoading] = useState(Boolean(user));
+  const [profileLoaded, setProfileLoaded] = useState(!user);
   useEffect(() => {
     if (!user || !db) return;
-    const fail = () => { setError('Your account could not be loaded. Check your connection or try again.'); setLoading(false); };
+    const fail = key => failure => {
+      setLoadErrors(previous => ({ ...previous, [key]: dataErrorMessage(failure, { profile: 'your profile', sessions: 'workout history', meals: 'your meals', customPlans: 'custom workouts' }[key]) }));
+      setLoading(false);
+    };
     const ready = new Set();
-    const markReady = key => { ready.add(key); if (ready.size === 4) setLoading(false); };
+    const markReady = key => {
+      setLoadErrors(previous => { const next = { ...previous }; delete next[key]; return next; });
+      ready.add(key); if (ready.size === 4) setLoading(false);
+    };
     const stop = [onSnapshot(doc(db, 'users', user.uid), snap => {
       const p = snap.data() || {};
-      setData(d => ({ ...d, profile: { ...defaults, name: user.displayName || '', ...p }, water: p.trackerWater || {}, steps: p.trackerSteps || {} })); markReady('profile');
-    }, fail)];
+      setData(d => ({ ...d, profile: { ...defaults, name: user.displayName || '', ...p }, water: p.trackerWater || {}, steps: p.trackerSteps || {} })); setProfileLoaded(true); markReady('profile');
+    }, fail('profile'))];
     for (const [key, path] of [['sessions', 'workoutSessions'], ['meals', 'meals'], ['customPlans', 'workouts']]) {
-      stop.push(onSnapshot(collection(db, 'users', user.uid, path), snap => { setData(d => ({ ...d, [key]: snap.docs.map(s => { const row = s.data(); const timestamp = row.completedAt || row.createdAt; return { ...row, id: s.id, ...(key !== 'customPlans' ? { date: row.date || (timestamp ? dayjs(timestamp.toDate?.() || timestamp).format('YYYY-MM-DD') : '') } : {}) }; }) })); markReady(key); }, fail));
+      stop.push(onSnapshot(collection(db, 'users', user.uid, path), snap => { setData(d => ({ ...d, [key]: snap.docs.map(s => { const row = s.data(); const timestamp = row.completedAt || row.createdAt; return { ...row, id: s.id, ...(key !== 'customPlans' ? { date: row.date || (timestamp ? dayjs(timestamp.toDate?.() || timestamp).format('YYYY-MM-DD') : '') } : {}) }; }) })); markReady(key); }, fail(key)));
     }
     return () => stop.forEach(fn => fn());
-  }, [user]);
+  }, [user, attempt]);
 
-  async function commit(next, cloudWrite) {
+  async function commit(next, cloudWrite, profileOnly = false) {
+    if (user && (profileOnly ? !profileLoaded || loadErrors.profile : loading || Object.keys(loadErrors).length)) {
+      setError('Wait until your account data has loaded before making changes. Resolve the loading error and retry.');
+      return false;
+    }
     setError('');
     try {
       if (user && db) await cloudWrite();
@@ -42,7 +56,13 @@ export default function useTracker(user) {
     } catch { setError('Changes could not be saved. Check your connection and available browser storage, then retry.'); return false; }
   }
   const profileRef = () => doc(db, 'users', user.uid);
-  const updateProfile = profile => commit({ ...data, profile }, () => setDoc(profileRef(), profile, { merge: true }));
+  const updateProfile = profile => commit({ ...data, profile }, () => setDoc(profileRef(), profile, { merge: true }), true);
+  const toggleFavorite = id => {
+    const current = data.profile.favoriteWorkoutIds || [];
+    const selected = current.includes(id);
+    const favoriteWorkoutIds = selected ? current.filter(value => value !== id) : [...current, id];
+    return commit({ ...data, profile: { ...data.profile, favoriteWorkoutIds } }, () => setDoc(profileRef(), { favoriteWorkoutIds: selected ? arrayRemove(id) : arrayUnion(id) }, { merge: true }));
+  };
   const setDaily = (key, date, value) => {
     const values = { ...data[key], [date]: value };
     return commit({ ...data, [key]: values }, () => setDoc(profileRef(), { [key === 'water' ? 'trackerWater' : 'trackerSteps']: values }, { merge: true }));
@@ -55,5 +75,6 @@ export default function useTracker(user) {
   const editPlan = (id, record) => commit({ ...data, customPlans: data.customPlans.map(p => p.id === id ? { ...p, ...record } : p) }, () => setDoc(doc(db, 'users', user.uid, 'workouts', id), record, { merge: true }));
   const remove = (key, id) => commit({ ...data, [key]: data[key].filter(r => r.id !== id) }, () => deleteDoc(doc(db, 'users', user.uid, key === 'sessions' ? 'workoutSessions' : key === 'customPlans' ? 'workouts' : 'meals', id)));
   const resetLocal = () => commit(emptyData(), async () => {});
-  return { data, error, loading, updateProfile, setDaily, add, editPlan, remove, resetLocal };
+  const retryLoad = () => { setError(''); setLoading(true); setAttempt(value => value + 1); };
+  return { data, error, loadErrors, retryLoad, loading, profileLoaded, updateProfile, toggleFavorite, setDaily, add, editPlan, remove, resetLocal };
 }
