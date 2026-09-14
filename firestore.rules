@@ -15,6 +15,9 @@ service cloud.firestore {
       match /workouts/{workoutId} {
         allow read, write: if ownsAccount(userId);
       }
+      match /measurements/{measurementId} {
+        allow read, write: if ownsAccount(userId);
+      }
     }
   }
 }

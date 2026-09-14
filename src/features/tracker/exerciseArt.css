@@ -1,0 +1,62 @@
+/* Exercise artwork: session checklist, workout cards, recommendations.
+   Photographs where the dataset covers the exercise, a plain tile where it does not. */
+.exercise-checklist{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.exercise-item{background:#f3f6ee;border-radius:7px}
+.exercise-line{display:flex;align-items:center;gap:6px;padding-right:9px}
+.exercise-checklist .exercise-line label{flex:1;min-width:0;background:transparent;padding:10px 12px;gap:12px}
+.exercise-line label>span{min-width:0;overflow-wrap:anywhere}
+
+.exercise-art{display:block;background:#e9ece4;border:1px solid #dde3d6;border-radius:6px;object-fit:cover}
+.exercise-art.thumb{width:74px;height:50px;flex-shrink:0}
+/* Shown in place of a photograph the dataset does not have. */
+.exercise-tile{display:grid;place-items:center;background:#eef2e8;color:#8ba173;border:1px solid #e2e8db;border-radius:6px}
+.exercise-tile.thumb{width:74px;height:50px;flex-shrink:0}
+.exercise-line label:has(input:checked) .exercise-art,
+.exercise-line label:has(input:checked) .exercise-tile{opacity:.45}
+
+.how-to-toggle{display:flex;align-items:center;gap:4px;flex-shrink:0;font-size:11px;font-weight:600;color:#5d7549;padding:7px 8px;border-radius:6px}
+.how-to-toggle:hover{background:#e7eeda}
+.how-to-toggle svg{transition:transform .18s}
+.how-to-toggle svg.flipped{transform:rotate(180deg)}
+
+.exercise-howto{display:flex;gap:15px;padding:14px 13px 15px;border-top:1px solid #e3e9da;align-items:flex-start}
+.exercise-howto[hidden]{display:none}
+.exercise-frames{display:grid;gap:7px;width:176px;flex-shrink:0}
+.exercise-frames figure{margin:0}
+.exercise-frames figcaption{font-size:10px;letter-spacing:.4px;text-transform:uppercase;color:#8e9884;margin-top:4px;text-align:center}
+.exercise-howto .exercise-art.figure{width:100%;height:118px}
+.exercise-howto h3{font-size:13px}
+.exercise-howto ol{margin:9px 0 0;padding-left:18px;font-size:12px;line-height:1.8;color:#63705d}
+.exercise-howto ol li{margin-bottom:3px}
+.exercise-howto-note{font-size:11px;line-height:1.7;color:#8e9884;margin-top:10px}
+@media(max-width:560px){
+  .exercise-howto{flex-direction:column}
+  .exercise-frames{width:100%;grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+  .exercise-art.thumb,.exercise-tile.thumb{width:58px;height:40px}
+  .how-to-toggle{font-size:0;gap:0;padding:8px}
+}
+
+/* Workout library card preview: the image fills the banner edge to edge */
+.library-card .workout-art{height:140px;padding:0;overflow:hidden}
+.workout-art .exercise-art,.workout-art .exercise-tile{border:0;width:100%;height:100%;border-radius:0;object-fit:cover}
+
+/* Recommendation cards */
+.recommendation-card .exercise-art{width:100%;height:112px;object-fit:cover;border-color:#e5ebde}
+
+/* Per-set logging inside the session checklist */
+.set-count{font-size:11px;color:#6d7d64;background:#e6edda;border-radius:5px;padding:4px 7px;white-space:nowrap;flex-shrink:0}
+.set-log{padding:0 12px 12px;border-top:1px solid #e7ece0;margin-top:2px;padding-top:11px}
+.set-log ol{list-style:none;margin:0 0 9px;padding:0;display:grid;gap:7px}
+.set-log li{display:flex;align-items:center;gap:8px}
+.set-index{width:18px;flex-shrink:0;font-size:11px;color:#93a088;text-align:center}
+.set-log input{width:62px;flex-shrink:0;border:1px solid #dfe5d7;border-radius:6px;padding:8px 9px;font-size:13px;background:#fff;color:#23362d;text-align:center}
+.set-unit{font-size:11px;color:#93a088;flex-shrink:0}
+.set-log input:focus{border-color:#8da774;outline-offset:2px}
+.set-times{color:#93a088;font-size:12px;flex-shrink:0}
+.set-log .icon-button{width:28px;height:28px;flex-shrink:0;margin-left:auto}
+.set-log-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.set-log-last{font-size:11px;color:#8b9580;margin-left:auto}
+@media(max-width:560px){
+  .set-log-last{margin-left:0;width:100%;order:3}
+  .set-count{display:none}
+}

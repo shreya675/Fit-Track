@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
 export const today = () => dayjs().format('YYYY-MM-DD');
-export const defaults = { name: 'Alex Morgan', fitnessGoal: 'Build a consistent routine', dailyWorkout: 60, dailySteps: 8000, dailyCalories: 500, nutritionGoal: 2200, waterGoal: 8, weeklySessions: 4 };
+export const defaults = { name: 'Alex Morgan', fitnessGoal: 'Build a consistent routine', trainingFocus: 'A balanced mix', equipment: [], dismissedExerciseIds: [], dailyWorkout: 60, dailySteps: 8000, dailyCalories: 500, nutritionGoal: 2200, waterGoal: 8, weeklySessions: 4 };
 export const plans = [
   { id: 'bodyweight-basics', title: 'Bodyweight circuit', category: 'Strength', durationMinutes: 25, difficulty: 'Beginner', equipment: 'No equipment', description: 'A simple home session using bodyweight movements.', exercises: ['March in place · 3 minutes', 'Bodyweight squat · 2 × 10', 'Wall push-up · 2 × 10', 'Glute bridge · 2 × 12', 'Bird dog · 2 × 8 each side', 'Easy walk and stretch · 3 minutes'], notes: 'Rest between sets as needed. Use a comfortable range of motion.' },
   { id: 'lower-body', title: 'Lower body strength', category: 'Strength', durationMinutes: 35, difficulty: 'Intermediate', equipment: 'Dumbbells · Exercise mat', description: 'A lower-body routine covering squats, hinges, and single-leg work.', exercises: ['Easy walk and bodyweight warm-up · 5 minutes', 'Goblet squat · 3 × 10', 'Dumbbell Romanian deadlift · 3 × 10', 'Reverse lunge · 2 × 8 each side', 'Standing calf raise · 3 × 12', 'Cool-down · 5 minutes'], notes: 'Choose a weight you can control. Rest 60–90 seconds between sets.' },
@@ -19,11 +19,22 @@ export const plans = [
   { id: 'core', title: 'Core foundations', category: 'Strength', durationMinutes: 15, difficulty: 'Beginner', equipment: 'Exercise mat', description: 'Short, simple, and easy to make a habit.', exercises: ['Warm-up · 3 minutes', 'Dead bug · 3 × 10', 'Bird dog · 3 × 10 each side', 'Side plank · 3 × 20 seconds each side'] },
 ];
 
-export function emptyData() { return { profile: { ...defaults, name: '' }, sessions: [], meals: [], water: {}, steps: {}, customPlans: [], demo: false }; }
+// Sample strength logs so the records and progress panels have something to show.
+function sampleEntries(index) {
+  const step = Math.floor(index / 3);
+  return [
+    { slug: 'goblet-squat', name: 'Goblet squat', sets: [{ weight: 10 + step * 2, reps: 10 }, { weight: 10 + step * 2, reps: 10 }, { weight: 10 + step * 2, reps: 8 }] },
+    { slug: 'dumbbell-row', name: 'Dumbbell row', sets: [{ weight: 8 + step * 2, reps: 12 }, { weight: 8 + step * 2, reps: 10 }] },
+    { slug: 'plank', name: 'Plank', sets: [{ weight: 0, reps: 3 }] },
+  ];
+}
+
+export function emptyData() { return { profile: { ...defaults, name: '' }, sessions: [], meals: [], water: {}, steps: {}, customPlans: [], measurements: [], demo: false }; }
 export function demoData() {
   const date = today();
   return { ...emptyData(), demo: true, profile: { ...defaults }, water: { [date]: 5 }, steps: { [date]: 6240 },
-    sessions: [0, 1, 3, 5, 7, 9, 11, 13].map((days, i) => ({ id: `sample-${i}`, title: ['Morning run', 'Full body strength', 'Reset & recover'][i % 3], category: ['Cardio', 'Strength', 'Mobility'][i % 3], durationMinutes: [32, 45, 20][i % 3], calories: [286, 320, 75][i % 3], date: dayjs().subtract(days, 'day').format('YYYY-MM-DD') })),
+    sessions: [0, 1, 3, 5, 7, 9, 11, 13].map((days, i) => ({ id: `sample-${i}`, title: ['Morning run', 'Full body strength', 'Reset & recover'][i % 3], category: ['Cardio', 'Strength', 'Mobility'][i % 3], durationMinutes: [32, 45, 20][i % 3], calories: [286, 320, 75][i % 3], date: dayjs().subtract(days, 'day').format('YYYY-MM-DD'), ...(i % 3 === 1 ? { entries: sampleEntries(i) } : {}) })),
+    measurements: [0, 7, 14, 21, 28].map((days, i) => ({ id: `sample-weight-${i}`, date: dayjs().subtract(days, 'day').format('YYYY-MM-DD'), weight: [74.2, 74.6, 75.1, 75.4, 76][i] })),
     meals: [{ id: 'meal-1', name: 'Oats, banana & peanut butter', type: 'Breakfast', calories: 420, protein: 18, carbs: 58, fat: 14, date }, { id: 'meal-2', name: 'Grilled chicken & rice bowl', type: 'Lunch', calories: 640, protein: 42, carbs: 72, fat: 20, date }, { id: 'meal-3', name: 'Greek yogurt & berries', type: 'Snack', calories: 180, protein: 15, carbs: 22, fat: 4, date }],
   };
 }

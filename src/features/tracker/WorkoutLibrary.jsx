@@ -6,6 +6,7 @@ import { Empty, Icon } from './components';
 import { selectWorkouts, workoutMinutes } from './workoutFilters';
 import './workoutLibrary.css';
 import ExerciseRecommendations from './ExerciseRecommendations';
+import { ExerciseArtImage, findPlanArt } from './exerciseArt';
 
 export default function WorkoutLibrary({ tracker, setModal }) {
   const [category, setCategory] = useState('All workouts');
@@ -53,7 +54,9 @@ export default function WorkoutLibrary({ tracker, setModal }) {
       const custom = tracker.data.customPlans.some(p => p.id === plan.id);
       const lastSession = tracker.data.sessions.filter(s => s.planId === plan.id || (!s.planId && s.title === plan.title)).sort((a, b) => b.date.localeCompare(a.date))[0];
       const exercises = Array.isArray(plan.exercises) ? plan.exercises : String(plan.exercises || '').split(',').filter(Boolean);
+      const art = findPlanArt(plan);
       return <article className="panel workout-card library-card" key={plan.id}>
+        {art && <div className={`workout-art ${plan.category?.toLowerCase() || ''}`}><ExerciseArtImage art={art} alt={art.standIn ? plan.title : `${plan.title}: ${art.name} demonstrated`} /></div>}
         <div className="routine-card-heading"><span className={`exercise-icon ${plan.category?.toLowerCase()}`}><Icon category={plan.category} /></span><span>{plan.category}{custom ? ' · Custom' : ''}</span><button className={`icon-button favorite-button ${favorites.includes(plan.id) ? 'saved' : ''}`} disabled={saving} aria-pressed={favorites.includes(plan.id)} aria-label={`${favorites.includes(plan.id) ? 'Remove' : 'Save'} ${plan.title} ${favorites.includes(plan.id) ? 'from' : 'to'} favorites`} onClick={() => toggleFavorite(plan)}><Heart size={19} fill={favorites.includes(plan.id) ? 'currentColor' : 'none'} /></button></div>
         <div className="workout-card-body"><h2>{plan.title}</h2><p>{plan.description || plan.notes || 'Your custom workout routine.'}</p>
           <div className="workout-meta"><span><Clock3 size={15} />{workoutMinutes(plan)} min</span><span>{exercises.length} exercises</span><span>{plan.difficulty || 'Not specified'}</span></div>
