@@ -57,3 +57,20 @@ test('A fresh workspace has zero activity and meaningful editable goals', () => 
   assert.equal(result.week.length,7);
   assert.ok(data.profile.weeklySessions > 0);
 });
+
+test('A saved sample workspace is shifted forward to today so it never reads as empty', async () => {
+  const { demoData, reanchorDemo, summarize } = await import('../src/features/tracker/data.js');
+  const dayjs = (await import('dayjs')).default;
+  const saved = { ...demoData(), demoDate: '2026-09-01', sessions: [{ id: 's', title: 'Old', durationMinutes: 30, date: '2026-09-01' }, { id: 't', title: 'Older', durationMinutes: 10, date: '2026-08-30' }], water: { '2026-09-01': 4 }, steps: { '2026-09-01': 5000 }, meals: [{ id: 'm', name: 'Meal', calories: 100, date: '2026-09-01' }] };
+  const moved = reanchorDemo(saved, '2026-09-15');
+  assert.equal(moved.demoDate, '2026-09-15');
+  assert.deepEqual(moved.sessions.map(s => s.date), ['2026-09-15', '2026-09-13']);
+  assert.equal(moved.meals[0].date, '2026-09-15');
+  assert.deepEqual(moved.water, { '2026-09-15': 4 });
+  assert.deepEqual(moved.steps, { '2026-09-15': 5000 });
+  assert.equal(summarize(moved, '2026-09-15').minutes, 30);
+  assert.equal(reanchorDemo(saved, '2026-09-01'), saved, 'same day: untouched');
+  assert.equal(reanchorDemo({ ...saved, demo: false }, '2026-09-15').sessions[0].date, '2026-09-01', 'a real local workspace is never shifted');
+  assert.equal(reanchorDemo({ ...saved, demoDate: undefined, sessions: [{ id: 'sample-0', date: '2026-09-01' }, { id: 'sample-3', date: '2026-08-27' }] }, '2026-09-15').sessions[1].date, '2026-09-10', 'an older demo without a stamp is anchored on its newest sample session');
+  assert.equal(demoData().demoDate, dayjs().format('YYYY-MM-DD'));
+});

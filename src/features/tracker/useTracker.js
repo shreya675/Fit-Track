@@ -1,21 +1,21 @@
 import { useEffect, useState } from 'react';
-import { collection, doc, onSnapshot, setDoc, deleteDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, doc, onSnapshot, setDoc, deleteDoc, arrayUnion, arrayRemove, writeBatch } from 'firebase/firestore';
 import { db } from '../../firebase';
 import dayjs from 'dayjs';
-import { defaults, demoData, emptyData } from './data';
+import { defaults, demoData, emptyData, reanchorDemo } from './data';
 import { dataErrorMessage } from './dataErrors';
 
 const KEY = 'fittrack.local.v1';
 // Local keys mapped to their Firestore subcollection under users/{uid}.
-const COLLECTIONS = { sessions: 'workoutSessions', meals: 'meals', customPlans: 'workouts', measurements: 'measurements' };
+const COLLECTIONS = { sessions: 'workoutSessions', meals: 'meals', customPlans: 'workouts', measurements: 'measurements', savedMeals: 'savedMeals' };
 // Additions the rest of the app can live without. If one of these fails to load
 // the page keeps working and only the panel that needs it reports the problem,
 // so a missing Firestore rule for a new collection cannot black out the app.
-const OPTIONAL = new Set(['measurements']);
+const OPTIONAL = new Set(['measurements', 'savedMeals']);
 function readLocal() {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY));
-    if (raw && Array.isArray(raw.sessions) && Array.isArray(raw.meals)) return { ...emptyData(), ...raw, profile: { ...defaults, ...raw.profile } };
+    if (raw && Array.isArray(raw.sessions) && Array.isArray(raw.meals)) return reanchorDemo({ ...emptyData(), ...raw, profile: { ...defaults, ...raw.profile } });
   } catch { /* A fresh local workspace remains usable when browser storage is unavailable. */ }
   return demoData();
 }
@@ -30,20 +30,20 @@ export default function useTracker(user) {
   useEffect(() => {
     if (!user || !db) return;
     const fail = key => failure => {
-      setLoadErrors(previous => ({ ...previous, [key]: dataErrorMessage(failure, { profile: 'your profile', sessions: 'workout history', meals: 'your meals', customPlans: 'custom workouts', measurements: 'your weight log' }[key]) }));
+      setLoadErrors(previous => ({ ...previous, [key]: dataErrorMessage(failure, { profile: 'your profile', sessions: 'workout history', meals: 'your meals', customPlans: 'custom workouts', measurements: 'your weight log', savedMeals: 'your saved meals' }[key]) }));
       setLoading(false);
     };
     const ready = new Set();
     const markReady = key => {
       setLoadErrors(previous => { const next = { ...previous }; delete next[key]; return next; });
-      ready.add(key); if (ready.size === 5) setLoading(false);
+      ready.add(key); if (ready.size === 6) setLoading(false);
     };
     const stop = [onSnapshot(doc(db, 'users', user.uid), snap => {
       const p = snap.data() || {};
       setData(d => ({ ...d, profile: { ...defaults, name: user.displayName || '', ...p }, water: p.trackerWater || {}, steps: p.trackerSteps || {} })); setProfileLoaded(true); markReady('profile');
     }, fail('profile'))];
-    for (const [key, path] of [['sessions', 'workoutSessions'], ['meals', 'meals'], ['customPlans', 'workouts'], ['measurements', 'measurements']]) {
-      stop.push(onSnapshot(collection(db, 'users', user.uid, path), snap => { setData(d => ({ ...d, [key]: snap.docs.map(s => { const row = s.data(); const timestamp = row.completedAt || row.createdAt; return { ...row, id: s.id, ...(key !== 'customPlans' ? { date: row.date || (timestamp ? dayjs(timestamp.toDate?.() || timestamp).format('YYYY-MM-DD') : '') } : {}) }; }) })); markReady(key); }, fail(key)));
+    for (const [key, path] of [['sessions', 'workoutSessions'], ['meals', 'meals'], ['customPlans', 'workouts'], ['measurements', 'measurements'], ['savedMeals', 'savedMeals']]) {
+      stop.push(onSnapshot(collection(db, 'users', user.uid, path), snap => { setData(d => ({ ...d, [key]: snap.docs.map(s => { const row = s.data(); const timestamp = row.completedAt || row.createdAt; return { ...row, id: s.id, ...(!['customPlans', 'savedMeals'].includes(key) ? { date: row.date || (timestamp ? dayjs(timestamp.toDate?.() || timestamp).format('YYYY-MM-DD') : '') } : {}) }; }) })); markReady(key); }, fail(key)));
     }
     return () => stop.forEach(fn => fn());
   }, [user, attempt]);
@@ -80,6 +80,8 @@ export default function useTracker(user) {
   };
   const restoreExercises = () => commit({ ...data, profile: { ...data.profile, dismissedExerciseIds: [] } },
     () => setDoc(profileRef(), { dismissedExerciseIds: [] }, { merge: true }));
+  // The plan lives on the profile document so no extra collection or security rule is needed.
+  const setWeeklyPlan = weeklyPlan => commit({ ...data, profile: { ...data.profile, weeklyPlan } }, () => setDoc(profileRef(), { weeklyPlan }, { merge: true }), true);
   const setDaily = (key, date, value) => {
     const values = { ...data[key], [date]: value };
     return commit({ ...data, [key]: values }, () => setDoc(profileRef(), { [key === 'water' ? 'trackerWater' : 'trackerSteps']: values }, { merge: true }));
@@ -88,6 +90,15 @@ export default function useTracker(user) {
     const row = { ...record, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
     const path = COLLECTIONS[key];
     return commit({ ...data, [key]: [row, ...data[key]] }, () => setDoc(doc(db, 'users', user.uid, path, row.id), row));
+  };
+  const addMany = (key, records) => {
+    if (!records.length || records.length > 400) { setError('Choose between 1 and 400 entries to copy.'); return Promise.resolve(false); }
+    const rows = records.map(record => ({ ...record, id: crypto.randomUUID(), createdAt: new Date().toISOString() }));
+    return commit({ ...data, [key]: [...rows, ...data[key]] }, async () => {
+      const batch = writeBatch(db);
+      for (const row of rows) batch.set(doc(db, 'users', user.uid, COLLECTIONS[key], row.id), row);
+      await batch.commit();
+    });
   };
   const edit = (key, id, record) => {
     const changes = { ...record, updatedAt: new Date().toISOString() };
@@ -98,5 +109,5 @@ export default function useTracker(user) {
   const remove = (key, id) => commit({ ...data, [key]: data[key].filter(r => r.id !== id) }, () => deleteDoc(doc(db, 'users', user.uid, COLLECTIONS[key], id)));
   const resetLocal = () => commit(emptyData(), async () => {});
   const retryLoad = () => { setError(''); setLoading(true); setAttempt(value => value + 1); };
-  return { data, error, loadErrors, blockingErrors, retryLoad, loading, profileLoaded, updateProfile, toggleFavorite, dismissExercise, restoreExercises, setDaily, add, edit, editPlan, remove, resetLocal };
+  return { data, error, loadErrors, blockingErrors, retryLoad, loading, profileLoaded, updateProfile, toggleFavorite, dismissExercise, restoreExercises, setWeeklyPlan, setDaily, add, addMany, edit, editPlan, remove, resetLocal };
 }

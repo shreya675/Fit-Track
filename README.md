@@ -21,8 +21,13 @@ Open the URL printed by Vite. The welcome page offers **Sign in with Google** an
 - Body weight readings with a trend chart and the change over the last 30 days, kept separate from the single figure in your profile.
 - Optional workout session notes appear in history. Custom workouts support difficulty, equipment, and instructions. Timed sessions retain the original routine ID for completion tracking.
 - Manual workout logs with dates and duration. Activity calories are estimated from the duration, the exercises done and your body weight, and can be typed over.
-- Food diary by date, meal categories, calories, and optional macros.
+- Food diary by date with meal categories. Describe a meal in plain words ("2 roti, 1 katori dal, half cup rice") and calories, protein, carbs and fat are estimated as you type from a built-in catalog of about 160 everyday and Indian foods with household measures; every matched item can be corrected and every number typed over. Recent meals re-log in one tap.
+- Macro targets (protein, carbs, fat) alongside the calorie target, progress against each on the Nutrition page, and a seven-day view of intake against target with workout calories alongside.
 - Progress history and configurable daily and weekly targets.
+- Weekly plan: assign built-in or custom routines to weekdays (up to three a day), see each day of the week as completed, partly done, missed, planned or rest, start today's planned routine from the Overview or the Plan page, and log a missed one late. The Plan page shows adherence for the week (planned vs. done, with the percentage based only on sessions already due), current and longest streaks, and a 16-week consistency heatmap of active minutes.
+- A weekly plan: assign routines to days of the week, see which planned sessions were done, missed or still ahead, and a 16-week training calendar with current and longest streaks.
+- A rest timer between sets that starts itself when a set is logged, can be nudged longer or shorter, and chimes, vibrates and (with permission) notifies when rest is over.
+- Light and dark colour themes, following the device setting by default with a manual override in Settings and a quick toggle in the top bar.
 - Responsive navigation, native modal focus handling, keyboard controls, reduced-motion support, form validation, save feedback, and deletion confirmations.
 - Optional Google sign-in with existing Firebase user records. Sample data is never automatically uploaded.
 
@@ -38,12 +43,12 @@ If the dashboard reports `permission-denied`, inspect **Firestore Database → R
 
 ```sh
 npm run lint
-node --test tests/data.test.js
+node --test tests/
 node tests/run-render-check.mjs
 npm run build
 ```
 
-Calculation tests cover Monday–Sunday week boundaries, date-scoped totals, duplicate-day streaks, and empty workspaces. Browser interaction tests and live Firebase sign-in are not part of this automated suite.
+Calculation tests cover Monday–Sunday week boundaries, date-scoped totals, duplicate-day streaks, empty workspaces, and weekly-plan editing, adherence statuses, longest streaks and calendar buckets (`tests/planning.test.js`). Browser interaction tests and live Firebase sign-in are not part of this automated suite.
 
 ## Source guide
 
@@ -99,6 +104,9 @@ Run `node --test tests/exerciseArt.test.js` to check that every library and reco
 - `src/features/tracker/progressStats.js`: set, personal-record and body-weight calculations.
 - `src/features/tracker/calories.js`: metabolic equivalents and the activity-calorie estimate.
 - `src/features/tracker/pages.jsx`: current app pages.
+- `src/features/tracker/WeeklyPlan.jsx` and `planning.js`: the Plan page, the assign-routine dialog, the Overview's "planned today" line, and the adherence, calendar and streak calculations.
+- `src/features/tracker/RestTimer.jsx` and `restTimer.js`: the between-sets countdown and its arithmetic.
+- `src/features/tracker/useTheme.js` and `theme.js`: colour theme preference; `src/theme.css` holds the dark palette.
 - `src/App.css`: shared design tokens and responsive styles.
 
 Earlier page components remain in `src/pages` for reference and are not imported by the redesigned application. Existing dependencies and Firebase collections are retained.
@@ -135,3 +143,32 @@ Sets, body weight, steps and nutrition are manually entered; activity calories a
 - Use the pencil beside a workout or meal in its history to correct an entry. Workout edits preserve routine references and exercise history, allow recorded set corrections, and retain saved calories unless changed explicitly.
 - On Progress, expand **Weight history** to edit or delete individual readings. New readings and corrections have timestamps; the most recently saved reading for a date drives the trend and calorie estimates regardless of storage order. Older untimestamped readings retain their existing fallback order until corrected.
 - Settings explains the duration/activity/body-weight calorie estimate and manual override.
+
+## Weekly plan and adherence
+
+- The plan is a template keyed by weekday (`profile.weeklyPlan`, e.g. `{ mon: ['full-body'], ... }`) and repeats every week. It is saved on the user's profile document, so no extra Firestore collection or rule is required; local and demo workspaces keep it in browser storage with the rest of the profile.
+- A planned routine counts as done when a session on that date references it: timed sessions carry `planId`, and manual logs match by title. Each session satisfies at most one slot, unplanned sessions are listed as extra and never count against adherence, and routine IDs that no longer exist (a deleted custom workout) are skipped.
+- Day statuses: **done**, **partial** (some slots done), **missed** (planned, nothing logged, date passed), **today** (planned, pending), **upcoming**, **extra** (nothing planned but a session logged) and **rest**. The week percentage divides completed slots by the slots due so far, so an untouched Friday does not lower Tuesday's score.
+- The heatmap buckets a day's total workout minutes into five levels (0, under 20, under 40, under 60, 60+). Days with a logged session of zero minutes still count as active days.
+- Editing while viewing an earlier or later week changes the same repeating template; statuses are always computed against the real current date.
+
+## Saved meals, recipes and approximate nutrition
+
+Nutrition now supports reusable recipes, serving adjustments, and copying selected meals between dates. Save a logged meal with **Save recipe**, or use **Create recipe**. Recipe values describe one serving; **Log servings** lets you select the amount eaten and review the scaled totals. Logged meals retain a nutrition snapshot when recipes are changed or deleted. Copying adds entries rather than replacing the destination diary.
+
+In the meal editor, the description itself is the input. `mealNutrition.js` splits it on commas, "and" and "with", reads a quantity (digits, fractions such as ½ or 1 1/2, and words such as "half" or "two"), a household measure (cup, katori, bowl, glass, tbsp, tsp, piece, slice, plate, handful, scoop, pack, small/medium/large, grams or ml) and a food name, then matches the name against `foodCatalog.js`: exact alias first, then an alias contained in the phrase, then a forgiving match (plurals, one-letter typos, shared words), each with a confidence. A compound such as "dal chawal" whose parts are all exact food names becomes one item per food. Each food carries gram weights for the measures it is usually described in and a default measure for bare counts ("2 roti" is two 40 g pieces); measures a food does not list fall back to generic weights. The matched items are listed under the field with their gram weight and calories, and the quantity, measure or food can be changed or the item removed; nutrient fields follow the estimate until typed into, and "Re-estimate" re-attaches them. Anything unrecognised is shown and left out of the total rather than guessed. The catalog is about 160 foods: USDA Foundation Foods entries keep their `fdcId`; Indian dishes carry typical values from the Indian Food Composition Tables and common recipes, marked `IFCT`; everything is per 100 g as eaten, approximate, and works offline with no API key. Run `node --test tests/mealNutrition.test.js` (parser, matching, units, catalog integrity).
+
+Saved recipes use `users/{uid}/savedMeals` for signed-in accounts. Deploy the updated `firestore.rules` with the application to enable that collection. If recipes cannot load, the diary stays usable and the recipe panel shows a retry message. Demo/local recipes use the existing browser workspace and are included in JSON exports. Meal copies are committed in one Firestore batch (up to 400 selected entries).
+
+## Weekly plan, rest timer and dark mode
+
+**Weekly plan.** The Plan page assigns routines from the library (built-in or custom) to days of the week; the same plan repeats every week. It is stored as `profile.weeklyPlan = { mon: [routineId, …], … }` on the user's profile document rather than in a new collection, so it needs no Firestore rule change and cannot block the rest of the app if it is missing. `planning.js` derives everything shown: `weeklyAdherence` marks each day done, partly done, missed, planned today, upcoming, extra (logged with nothing planned) or rest; a logged session counts for a planned routine when its `planId` matches, or when it was logged by hand under the same title. `activityCalendar` builds the 16-week heatmap in fixed minute bands, and `longestStreak` complements the current streak from the daily summary. The Overview shows what the plan says about today with a one-tap start. Days are capped at three routines, and one session never fills two slots. Bad plan data (unknown days, removed routines) is normalised rather than crashing the page. Run `node --test tests/planning.test.js`.
+
+**Rest timer.** Inside a workout session, logging a set (entering repetitions) starts a countdown, 90 seconds by default. The length is a device preference kept in this browser (`fittrack.rest-seconds`), adjustable in 15-second steps from 15 seconds to 10 minutes; a running rest can be extended, shortened or skipped, and auto-start can be switched off for the session. When it ends the app vibrates where supported, plays a short chime through the Web Audio API and, if notifications have been allowed and the tab is not visible, shows a browser notification. Permission is only ever requested from the "Notify me" link, never automatically. The countdown is based on an end timestamp, so it stays correct when the tab is in the background. Run `node --test tests/restTimer.test.js`.
+
+**Dark mode.** The light palette in `App.css` is expressed as tokens (`--bg`, `--surface`, `--surface-2`, `--field`, `--line`, `--ink`, `--muted`, `--accent`); `src/theme.css` swaps them under `[data-theme="dark"]` and restates the tinted panels, icons and muted text that were derived from the light palette. The preference (`system`, `light` or `dark`) lives in `localStorage` under `fittrack.theme`; `system` follows `prefers-color-scheme` and updates live when the device setting changes. An inline script in `index.html` applies the theme before the first paint so there is no flash, and `useTheme` keeps `<html data-theme>` and the `theme-color` meta tag in step afterwards. The brand-coloured sidebar, hero and primary buttons are identical in both themes. Run `node --test tests/theme.test.js`.
+
+## Macro targets and weekly intake
+
+`nutritionStats.js` derives the Nutrition page's targets and summaries. `macroTargets(profile)` returns the calorie target and gram targets for protein, carbs and fat: the profile's own `proteinGoal`/`carbsGoal`/`fatGoal` when set (My profile → Goals → Macro targets), otherwise a 30/40/30 energy split of the food target, marked as derived. `dayIntake` sums a day's meals and counts entries logged without macros so the cards can say they are a floor. `weekIntake` gives Monday-to-Sunday calories eaten against the target (within ±10% counts as on target; days with nothing logged are not judged), activity calories from that day's sessions, and averages over logged days only. The week panel is a plain bar chart with a dashed target line; tapping a day opens that day's diary. Run `node --test tests/nutritionStats.test.js`.
+

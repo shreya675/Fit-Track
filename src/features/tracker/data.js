@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
 export const today = () => dayjs().format('YYYY-MM-DD');
-export const defaults = { name: 'Alex Morgan', fitnessGoal: 'Build a consistent routine', trainingFocus: 'A balanced mix', equipment: [], dismissedExerciseIds: [], dailyWorkout: 60, dailySteps: 8000, dailyCalories: 500, nutritionGoal: 2200, waterGoal: 8, weeklySessions: 4 };
+export const defaults = { name: 'Alex Morgan', fitnessGoal: 'Build a consistent routine', trainingFocus: 'A balanced mix', equipment: [], dismissedExerciseIds: [], dailyWorkout: 60, dailySteps: 8000, dailyCalories: 500, nutritionGoal: 2200, waterGoal: 8, weeklySessions: 4, weeklyPlan: {} };
 export const plans = [
   { id: 'bodyweight-basics', title: 'Bodyweight circuit', category: 'Strength', durationMinutes: 25, difficulty: 'Beginner', equipment: 'No equipment', description: 'A simple home session using bodyweight movements.', exercises: ['March in place · 3 minutes', 'Bodyweight squat · 2 × 10', 'Wall push-up · 2 × 10', 'Glute bridge · 2 × 12', 'Bird dog · 2 × 8 each side', 'Easy walk and stretch · 3 minutes'], notes: 'Rest between sets as needed. Use a comfortable range of motion.' },
   { id: 'lower-body', title: 'Lower body strength', category: 'Strength', durationMinutes: 35, difficulty: 'Intermediate', equipment: 'Dumbbells · Exercise mat', description: 'A lower-body routine covering squats, hinges, and single-leg work.', exercises: ['Easy walk and bodyweight warm-up · 5 minutes', 'Goblet squat · 3 × 10', 'Dumbbell Romanian deadlift · 3 × 10', 'Reverse lunge · 2 × 8 each side', 'Standing calf raise · 3 × 12', 'Cool-down · 5 minutes'], notes: 'Choose a weight you can control. Rest 60–90 seconds between sets.' },
@@ -29,10 +29,10 @@ function sampleEntries(index) {
   ];
 }
 
-export function emptyData() { return { profile: { ...defaults, name: '' }, sessions: [], meals: [], water: {}, steps: {}, customPlans: [], measurements: [], demo: false }; }
+export function emptyData() { return { profile: { ...defaults, name: '' }, sessions: [], meals: [], savedMeals: [], water: {}, steps: {}, customPlans: [], measurements: [], demo: false }; }
 export function demoData() {
   const date = today();
-  return { ...emptyData(), demo: true, profile: { ...defaults }, water: { [date]: 5 }, steps: { [date]: 6240 },
+  return { ...emptyData(), demo: true, demoDate: date, profile: { ...defaults, weeklyPlan: { mon: ['full-body'], tue: ['easy-run'], wed: [], thu: ['upper-body'], fri: ['mobility'], sat: ['easy-run'], sun: [] } }, water: { [date]: 5 }, steps: { [date]: 6240 },
     sessions: [0, 1, 3, 5, 7, 9, 11, 13].map((days, i) => ({ id: `sample-${i}`, title: ['Morning run', 'Full body strength', 'Reset & recover'][i % 3], category: ['Cardio', 'Strength', 'Mobility'][i % 3], durationMinutes: [32, 45, 20][i % 3], calories: [286, 320, 75][i % 3], date: dayjs().subtract(days, 'day').format('YYYY-MM-DD'), ...(i % 3 === 1 ? { entries: sampleEntries(i) } : {}) })),
     measurements: [0, 7, 14, 21, 28].map((days, i) => ({ id: `sample-weight-${i}`, date: dayjs().subtract(days, 'day').format('YYYY-MM-DD'), weight: [74.2, 74.6, 75.1, 75.4, 76][i] })),
     meals: [{ id: 'meal-1', name: 'Oats, banana & peanut butter', type: 'Breakfast', calories: 420, protein: 18, carbs: 58, fat: 14, date }, { id: 'meal-2', name: 'Grilled chicken & rice bowl', type: 'Lunch', calories: 640, protein: 42, carbs: 72, fat: 20, date }, { id: 'meal-3', name: 'Greek yogurt & berries', type: 'Snack', calories: 180, protein: 15, carbs: 22, fat: 4, date }],
@@ -53,4 +53,22 @@ export function summarize(data, date = today()) {
   if (!days.has(date)) cursor = cursor.subtract(1, 'day');
   while (days.has(cursor.format('YYYY-MM-DD'))) { streak++; cursor = cursor.subtract(1, 'day'); }
   return { week, weekSessions, streak, sessions, meals, minutes: sessions.reduce((n, s) => n + Number(s.durationMinutes || 0), 0), burned: sessions.reduce((n, s) => n + Number(s.calories || 0), 0), eaten: meals.reduce((n, s) => n + Number(s.calories || 0), 0), water: data.water[date] || 0, steps: data.steps[date] || 0 };
+}
+
+/**
+ * The sample workspace is generated relative to the day it is first saved. Loaded again weeks later, every
+ * sample session would be in the past and the Overview would read zero, so a saved demo is shifted forward
+ * to today on load. Entries the visitor added move with it; a workspace that is not the demo is untouched.
+ */
+export function reanchorDemo(data, date = today()) {
+  if (!data?.demo) return data;
+  // Demos saved before the stamp existed are anchored on their newest sample session.
+  const anchor = data.demoDate || (data.sessions || []).filter(row => String(row.id).startsWith('sample-')).map(row => row.date).sort().pop();
+  if (!anchor || anchor === date) return data;
+  const offset = dayjs(date).diff(dayjs(anchor), 'day');
+  if (!offset) return data;
+  const shift = value => (value ? dayjs(value).add(offset, 'day').format('YYYY-MM-DD') : value);
+  const shiftRows = rows => (rows || []).map(row => ({ ...row, date: shift(row.date) }));
+  const shiftKeys = map => Object.fromEntries(Object.entries(map || {}).map(([key, value]) => [shift(key), value]));
+  return { ...data, demoDate: date, sessions: shiftRows(data.sessions), meals: shiftRows(data.meals), measurements: shiftRows(data.measurements), water: shiftKeys(data.water), steps: shiftKeys(data.steps) };
 }
