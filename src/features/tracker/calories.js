@@ -1,13 +1,8 @@
-// Estimating the energy cost of a session, so the calories field is not a guess.
-//
-// kcal/min = MET x 3.5 x bodyweight(kg) / 200, the standard metabolic equivalent
-// formula. MET values follow the published Compendium of Physical Activities for
-// moderate effort. Every figure here is an average across people and a session is
-// not a laboratory, so treat the result as a rough guide, never a measurement.
+// Activity calories: kcal/min = MET * 3.5 * kg / 200. MET values from the Compendium of Physical Activities (moderate effort).
 import { findExerciseArt } from './exerciseArtMatch.js';
 import { latestWeight } from './progressStats.js';
 
-/** Metabolic equivalents at moderate effort, per exercise illustration slug. */
+// MET per exercise slug
 export const exerciseMet = {
  "ankle-circles": 2.0,
  "arm-circles": 2.8,
@@ -78,11 +73,10 @@ export const exerciseMet = {
  "weighted-calf-raise": 3.5
 };
 
-/** Used when nothing in a session matches a known exercise. */
+// fallback by category
 export const categoryMet = { Strength: 3.8, Cardio: 6.0, Mobility: 2.5 };
 const DEFAULT_MET = 3.5;
 
-/** The average cost of the exercises actually done, falling back to the category. */
 export function metFor({ exercises = [], category } = {}) {
   const values = (Array.isArray(exercises) ? exercises : [])
     .map(entry => findExerciseArt(entry)?.slug)
@@ -93,7 +87,7 @@ export function metFor({ exercises = [], category } = {}) {
   return categoryMet[category] ?? DEFAULT_MET;
 }
 
-/** The weight to calculate with: a logged reading first, then the profile figure. */
+// latest logged weight, else profile weight
 export function bodyWeight(data) {
   const logged = latestWeight(data?.measurements);
   if (logged) return { weight: logged.weight, source: 'log', date: logged.date };
@@ -102,7 +96,6 @@ export function bodyWeight(data) {
   return null;
 }
 
-/** Rounded kilocalories, or null when there is not enough to work from. */
 export function estimateCalories({ minutes, weightKg, exercises, category } = {}) {
   const duration = Number(minutes), weight = Number(weightKg);
   if (!Number.isFinite(duration) || duration <= 0 || duration > 1440) return null;

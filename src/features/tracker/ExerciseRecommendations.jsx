@@ -25,8 +25,7 @@ export default function ExerciseRecommendations({ tracker, setModal }) {
       <div className="recommendation-grid">{result.items.map(exercise => {
         const art = findExerciseArt(exercise.name);
         return <article className="panel recommendation-card" key={exercise.id}>
-        {/* A photograph where the dataset has one; otherwise a plain category tile,
-            since a drawing of a different exercise would be worse than no picture. */}
+        {/* photo if available, else category tile */}
         {art?.photo?.length
           ? <ExerciseArtImage art={art} />
           : <span className={`exercise-tile ${exercise.category.toLowerCase()}`} aria-hidden="true"><Icon category={exercise.category} size={28} /></span>}
@@ -45,7 +44,7 @@ export default function ExerciseRecommendations({ tracker, setModal }) {
         <span role="status">{result.dismissedCount} {result.dismissedCount === 1 ? 'exercise is' : 'exercises are'} hidden from suggestions.</span>
         <button className="text-link" onClick={tracker.restoreExercises}>Show them again</button>
       </p>}
-      <details><summary>How suggestions are chosen</summary><p>We look at the sessions you have logged in the last twelve weeks, counting recent ones more heavily. Each exercise is described by the same eight features — strength, cardio, mobility, upper body, lower body, core, impact and equipment — and we favour the part of <em>your own</em> mix that has had the least attention, something you have not done for a few weeks, equipment you can reach, and what you say you are working towards. Anything you did in the last couple of days is set aside, and a movement more demanding than anything you have done is held back rather than led with.{result.categorySessions > 0 ? ` ${result.categorySessions} older or manually logged sessions use category information because exercise details were unavailable.` : ''}</p><p>These are descriptions of content, not measurements of what is effective or safe for you. Nothing here is a training or medical prescription — check the equipment, and pick what suits how you feel today. Your focus and your equipment are set in <Link to="/profile">My profile</Link>.</p></details>
+      <details><summary>How suggestions are chosen</summary><p>Suggestions are based on your sessions from the last twelve weeks, with recent ones counting more. Each exercise is scored on strength, cardio, mobility, upper body, lower body, core, impact and equipment. We suggest the areas of your own routine that have had the least attention, exercises you have not done for a while, equipment you have, and your chosen focus. Exercises done in the last couple of days are skipped, and harder movements than you have done before are not suggested first.{result.categorySessions > 0 ? ` ${result.categorySessions} older or manually logged sessions use category information because exercise details were unavailable.` : ''}</p><p>These are descriptions of content, not measurements of what is effective or safe for you. This is not a training or medical prescription. Check the equipment and pick what suits you today. Your focus and your equipment are set in <Link to="/profile">My profile</Link>.</p></details>
     </>}
   </section>;
 }

@@ -1,4 +1,4 @@
-/* Progress page: body weight, personal records, per-exercise history. */
+/* progress page panels */
 .progress-panels{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:23px;margin-top:23px}
 .progress-panels>.panel{display:flex;flex-direction:column}
 

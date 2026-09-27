@@ -1,5 +1,4 @@
-// Colour theme preference. "system" follows the operating system; "light" and "dark" are explicit choices.
-// Kept free of React and the DOM so it can be unit-tested and reused by the pre-render script in index.html.
+// Theme preference: system | light | dark
 export const THEME_KEY = 'fittrack.theme';
 export const themeOptions = ['system', 'light', 'dark'];
 
@@ -18,13 +17,11 @@ export function writePreference(storage, preference) {
   } catch { return false; }
 }
 
-/** The theme actually shown for a preference, given whether the system currently prefers dark. */
 export function resolveTheme(preference, systemDark) {
   if (preference === 'light' || preference === 'dark') return preference;
   return systemDark ? 'dark' : 'light';
 }
 
-/** The quick toggle flips the visible theme and records it as an explicit choice. */
 export function toggledPreference(preference, systemDark) {
   return resolveTheme(preference, systemDark) === 'dark' ? 'light' : 'dark';
 }

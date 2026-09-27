@@ -6,17 +6,15 @@ import { defaults, demoData, emptyData, reanchorDemo } from './data';
 import { dataErrorMessage } from './dataErrors';
 
 const KEY = 'fittrack.local.v1';
-// Local keys mapped to their Firestore subcollection under users/{uid}.
+// local key -> Firestore subcollection
 const COLLECTIONS = { sessions: 'workoutSessions', meals: 'meals', customPlans: 'workouts', measurements: 'measurements', savedMeals: 'savedMeals' };
-// Additions the rest of the app can live without. If one of these fails to load
-// the page keeps working and only the panel that needs it reports the problem,
-// so a missing Firestore rule for a new collection cannot black out the app.
+// non-blocking collections: a load error only affects their own panel
 const OPTIONAL = new Set(['measurements', 'savedMeals']);
 function readLocal() {
   try {
     const raw = JSON.parse(localStorage.getItem(KEY));
     if (raw && Array.isArray(raw.sessions) && Array.isArray(raw.meals)) return reanchorDemo({ ...emptyData(), ...raw, profile: { ...defaults, ...raw.profile } });
-  } catch { /* A fresh local workspace remains usable when browser storage is unavailable. */ }
+  } catch { /* ignore */ }
   return demoData();
 }
 
@@ -71,7 +69,6 @@ export default function useTracker(user) {
     const favoriteWorkoutIds = selected ? current.filter(value => value !== id) : [...current, id];
     return commit({ ...data, profile: { ...data.profile, favoriteWorkoutIds } }, () => setDoc(profileRef(), { favoriteWorkoutIds: selected ? arrayRemove(id) : arrayUnion(id) }, { merge: true }));
   };
-  // Dismissed exercises still count as history; they are only kept out of suggestions.
   const dismissExercise = id => {
     const current = data.profile.dismissedExerciseIds || [];
     if (current.includes(id)) return Promise.resolve(true);
@@ -80,7 +77,7 @@ export default function useTracker(user) {
   };
   const restoreExercises = () => commit({ ...data, profile: { ...data.profile, dismissedExerciseIds: [] } },
     () => setDoc(profileRef(), { dismissedExerciseIds: [] }, { merge: true }));
-  // The plan lives on the profile document so no extra collection or security rule is needed.
+  // stored on the profile document
   const setWeeklyPlan = weeklyPlan => commit({ ...data, profile: { ...data.profile, weeklyPlan } }, () => setDoc(profileRef(), { weeklyPlan }, { merge: true }), true);
   const setDaily = (key, date, value) => {
     const values = { ...data[key], [date]: value };

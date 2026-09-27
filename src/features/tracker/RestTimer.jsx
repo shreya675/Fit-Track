@@ -5,7 +5,7 @@ import './restTimer.css';
 
 const canNotify = () => typeof Notification !== 'undefined';
 
-/** A short two-tone chime through the Web Audio API; silent wherever audio is unavailable. */
+// two-tone beep
 function chime() {
   try {
     const Context = window.AudioContext || window.webkitAudioContext;
@@ -21,22 +21,18 @@ function chime() {
       oscillator.start(context.currentTime + offset); oscillator.stop(context.currentTime + offset + 0.4);
     });
     setTimeout(() => context.close(), 1000);
-  } catch { /* No sound is better than a crash mid-workout. */ }
+  } catch { /* ignore */ }
 }
 
 function announce(seconds) {
-  try { navigator.vibrate?.([200, 100, 200]); } catch { /* Not every device vibrates. */ }
+  try { navigator.vibrate?.([200, 100, 200]); } catch { /* ignore */ }
   chime();
   if (canNotify() && Notification.permission === 'granted' && document.visibilityState !== 'visible') {
-    try { new Notification('Rest over', { body: `${formatClock(seconds)} rest finished. Next set.`, tag: 'fittrack-rest', silent: true }); } catch { /* Notification blocked by the platform. */ }
+    try { new Notification('Rest over', { body: `${formatClock(seconds)} rest finished. Next set.`, tag: 'fittrack-rest', silent: true }); } catch { /* ignore */ }
   }
 }
 
-/**
- * Countdown between sets. Starts by itself whenever a new set is logged (the count is passed in by the
- * session), can be nudged longer or shorter while running, and chimes, vibrates and — if allowed — sends
- * a browser notification when it ends. The chosen length is a device preference kept in this browser.
- */
+// Countdown between sets. Auto-starts when a set is logged.
 export default function RestTimer({ loggedSets = 0 }) {
   const [length, setLength] = useState(() => readRestSeconds(typeof localStorage === 'undefined' ? null : localStorage));
   const [auto, setAuto] = useState(true);
@@ -47,7 +43,7 @@ export default function RestTimer({ loggedSets = 0 }) {
   const previousSets = useRef(loggedSets);
   const remaining = restRemaining(rest, now);
 
-  // A newly logged set starts the rest; removing a set never does.
+  // start on new set only
   useEffect(() => {
     if (loggedSets > previousSets.current && auto) { setRest(startRest(length)); setDone(false); }
     previousSets.current = loggedSets;
@@ -95,7 +91,7 @@ export default function RestTimer({ loggedSets = 0 }) {
       </div>
     </> : <>
       <div className="rest-idle">
-        <span className="rest-status" role="status">{done ? 'Rest over — go for your next set.' : `Rest ${formatClock(length)} between sets`}</span>
+        <span className="rest-status" role="status">{done ? 'Rest over. Next set.' : `Rest ${formatClock(length)} between sets`}</span>
         <div className="rest-length" role="group" aria-label="Rest length">
           <button type="button" className="icon-button bordered" aria-label="Shorter rest" disabled={length <= 15} onClick={() => changeLength(-REST_STEP)}><Minus size={15} /></button>
           <span>{formatClock(length)}</span>

@@ -1,14 +1,9 @@
 import { today } from './data.js';
 
-// Curated content descriptors, not measurements of effectiveness or suitability.
-// Every axis is on the same 0–1 scale; categorical labels are never ordinal encoded.
+// all axes 0-1
 export const featureNames = ['strength', 'cardio', 'mobility', 'upperBody', 'lowerBody', 'core', 'impact', 'equipment'];
 
-// One row per exercise rather than one per group: a wall push-up and a full
-// push-up are not the same thing, and sharing a vector made them score alike.
-// The trailing number is how demanding the movement is to attempt — 1 gentle,
-// 2 moderate, 3 demanding. A curated ease-of-entry label, not an assessment of
-// anyone's fitness; it only stops a beginner being handed burpees and pike push-ups.
+// last column: demand 1-3
 //                     name                          category    equipment           str  car  mob  upp  low  cor  imp  eqp  dmd
 const catalog = [
   ['Wall push-up', 'Strength', 'No equipment', [.55, 0, .05, 1, 0, .2, 0, 0], 1],
@@ -101,45 +96,33 @@ function matchExercise(value) {
   return exerciseCatalog.find(exercise => normalize(exercise.name) === name || exercise.id === aliases[name]);
 }
 
-// ---------------------------------------------------------------- preferences
+// ---- preferences ----
 
-/** What someone says they are working towards, and the axis it leans on. */
 export const trainingFocuses = {
   'A balanced mix': null,
   'Building strength': 'strength',
   'Stamina and endurance': 'cardio',
   'Moving more easily': 'mobility',
 };
-/** Equipment a person can say they have. "No equipment" is always available. */
 export const equipmentOptions = ['Dumbbells', 'Exercise mat', 'Stationary bike'];
-/** How far above their usual a suggestion may jump in impact. */
 const impactTolerance = { 'Just getting started': .2, 'Occasionally active': .35, 'Regularly active': .5 };
-/** The most demanding movement offered before anything harder is held back. */
 const demandCeiling = { 'Just getting started': 1, 'Occasionally active': 2, 'Regularly active': 3 };
 
-// ---------------------------------------------------------------- ranking
+// ---- ranking ----
 
 const INDEX = Object.fromEntries(featureNames.map((name, i) => [name, i]));
 const MODES = ['strength', 'cardio', 'mobility'];
 const REGIONS = ['upperBody', 'lowerBody', 'core'];
-// The two sets that should stay roughly in proportion to each other.
 const BALANCE = [MODES, REGIONS];
 const AREA_LABEL = { strength: 'strength', cardio: 'cardio', mobility: 'mobility', upperBody: 'upper body', lowerBody: 'lower body', core: 'core' };
-const HALF_LIFE_DAYS = 14;   // a session counts half as much a fortnight later
-const WINDOW_DAYS = 84;      // and not at all after twelve weeks
-const RESTED_DAYS = 21;      // fully rested, for the purpose of suggesting it again
-const TOO_SOON_DAYS = 2;     // just done, so not suggested back to you
-const PER_CATEGORY = 2;      // keeps a trio from being three of the same thing
-const TOO_ALIKE = .985;      // biceps curl and hammer curl are not two suggestions
-
+const HALF_LIFE_DAYS = 14;   // half weight after 2 weeks
+const WINDOW_DAYS = 84;      // ignored after 12 weeks
+const RESTED_DAYS = 21;const TOO_SOON_DAYS = 2;const PER_CATEGORY = 2;      // variety
+const TOO_ALIKE = .985;
 const daysBetween = (from, to) => Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86400000);
 const clamp = value => Math.max(0, Math.min(1, value));
 
-/**
- * How far each balance axis sits below the average of its own group. Measured
- * against the person's own mix rather than an ideal, so the suggestion is
- * "this is the part you have touched least", not "this is what you should do".
- */
+// gap of each axis below its group average
 function gapsFrom(trained) {
   const gaps = featureNames.map(() => 0);
   for (const group of BALANCE) {
@@ -158,19 +141,7 @@ function describe({ lastDone, area, fit, focusAxis, feature }) {
   return 'Fits the work you have been doing';
 }
 
-/**
- * Suggestions are built from what a person has logged, weighted towards recent
- * sessions. They favour the part of their own routine that has had the least
- * attention, something they have not done for a while, and equipment they can
- * actually reach — then lean towards what they say they are working on, while
- * staying close to the kind of training they already do. A large jump in impact
- * is damped, by more for someone just getting started.
- *
- * Each completed session contributes equally regardless of length, so long
- * routines do not dominate. Legacy sessions without exercise data fall back to
- * their category's content centroid. Exercises the person has dismissed still
- * count as history but are never suggested back.
- */
+// Rank exercises from recent history: least-trained axis, not done recently, equipment available, user focus.
 export function recommendExercises(sessions = [], plans = [], date = today(), profile = {}) {
   const vectors = [];
   const lastSeen = new Map();
@@ -209,8 +180,6 @@ export function recommendExercises(sessions = [], plans = [], date = today(), pr
     || (declared.length ? declared.includes(equipment) : true);
   const focusAxis = trainingFocuses[profile.trainingFocus] || null;
   const tolerance = impactTolerance[profile.activityLevel] ?? .35;
-  // Someone who has already done demanding work has shown it suits them, whatever
-  // they said when they signed up.
   const attempted = [...lastSeen.keys()].map(id => exerciseCatalog.find(e => e.id === id)?.demand || 0);
   const ceiling = Math.max(demandCeiling[profile.activityLevel] ?? 2, ...attempted, 1);
 
@@ -221,18 +190,13 @@ export function recommendExercises(sessions = [], plans = [], date = today(), pr
       const contributions = gaps.map((gap, i) => gap * exercise.features[i]);
       const fit = gapTotal ? contributions.reduce((sum, value) => sum + value, 0) / gapTotal : 0;
       const rest = lastDone === null ? 1 : clamp(lastDone / RESTED_DAYS);
-      // Declared equipment is a filter above; history is only a hint about habits.
       const known = declared.length || equipmentUsed.has(exercise.equipment) ? 1 : 0.5;
       const similar = cosineSimilarity(trained, exercise.features);
-      // A constant for a balanced focus, so it shifts nothing.
       const focus = focusAxis ? exercise.features[INDEX[focusAxis]] : 0.5;
-      // Stepping up the impact of a routine is offered gently, never led with.
       const gentleness = exercise.features[INDEX.impact] - trained[INDEX.impact] > tolerance ? 0.6 : 1;
-      // Harder movements than the person has shown are not led with either.
       const step = exercise.demand - ceiling;
       const readiness = step <= 0 ? 1 : step === 1 ? 0.55 : 0.3;
-      // Body regions only describe strength work here; a stretch is explained by
-      // its mode, so "child's pose" is never sold as upper body training.
+      // regions only apply to strength work
       const namable = exercise.category === 'Strength' ? [...MODES, ...REGIONS] : MODES;
       const best = namable.reduce((top, name) =>
         contributions[INDEX[name]] > contributions[INDEX[top]] ? name : top, namable[0]);

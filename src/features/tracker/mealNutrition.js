@@ -15,7 +15,7 @@ export function scaleNutrition(base, servings) {
   return Object.fromEntries(nutrients.map(key => [key, base[key] == null || base[key] === '' ? null : round(Number(base[key]) * Number(servings))]));
 }
 
-// Copies contain nutrition snapshots, never the original record ID or timestamps.
+// copy without id/timestamps
 export function copyMeal(meal, date) {
   const servings = Number(meal.servings) > 0 ? Number(meal.servings) : 1;
   const base = perServing(meal);
@@ -28,11 +28,9 @@ export function recipeFromMeal(meal) {
   return { ...copyMeal(meal, ''), servings: 1, ...scaleNutrition(perServing(meal), 1) };
 }
 
-// ---------------------------------------------------------------------------------------------
-// Free-text meal parsing: "2 roti, 1 katori dal and half cup rice" -> matched foods with gram weights.
-// ---------------------------------------------------------------------------------------------
+// ---- free-text meal parsing ----
 
-/** Grams per unit when the food itself does not say. Liquids use the larger cup. */
+// generic grams per unit
 const GENERIC_UNITS = { g: 1, kg: 1000, ml: 1, l: 1000, cup: 150, katori: 150, bowl: 200, glass: 250, tbsp: 15, tsp: 5, slice: 30, handful: 28, plate: 250, scoop: 30, serving: 100, piece: null, small: null, medium: null, large: null, pack: null, can: 330, bottle: 500, bar: null, cube: 15, half: null, pint: 570, fillet: 150, leg: 120, block: 300, sachet: 10, spoon: 5, square: 6 };
 const UNIT_ALIASES = {
   g: ['g', 'gm', 'gms', 'gram', 'grams', 'grm'], kg: ['kg', 'kgs', 'kilo', 'kilos', 'kilogram', 'kilograms'],
@@ -47,7 +45,6 @@ const UNIT_ALIASES = {
 };
 const unitLookup = new Map();
 for (const [unit, aliases] of Object.entries(UNIT_ALIASES)) for (const alias of aliases) unitLookup.set(alias, unit);
-// Multi-word unit phrases are matched before single words.
 const UNIT_PHRASES = [['full plate', 'plate'], ['half plate', 'half-plate']];
 
 const NUMBER_WORDS = { a: 1, an: 1, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, dozen: 12, half: 0.5, quarter: 0.25, couple: 2, few: 3, some: 1 };
@@ -75,7 +72,7 @@ function editDistance(a, b) {
   return rows[a.length][b.length];
 }
 
-/** Rank catalog foods for a food phrase. Exact alias, then alias contained in phrase (longest wins), then fuzzy. */
+// rank foods: exact alias > contained > fuzzy
 export function matchFood(phrase, catalog = foods) {
   const query = canonical(normalise(phrase));
   if (!query) return [];
@@ -103,7 +100,6 @@ export function matchFood(phrase, catalog = foods) {
   return scored.sort((a, b) => b.score - a.score || a.food.name.length - b.food.name.length);
 }
 
-/** Grams for a quantity of a food in a unit; null when the unit makes no sense for that food. */
 export function gramsFor(food, quantity, unit) {
   if (!food || !Number.isFinite(quantity) || quantity <= 0) return null;
   if (unit === 'half-plate') return gramsFor(food, quantity * 0.5, 'plate');
@@ -118,17 +114,15 @@ export function gramsFor(food, quantity, unit) {
 }
 
 function parseQuantity(tokens) {
-  // Returns [quantity, tokensConsumed]. Handles "2", "1.5", "1/2", "1 1/2", "0.5", "half", "a", "two".
+  // returns [quantity, tokensUsed]
   let quantity = null, used = 0;
   const first = tokens[0];
   if (first && /^\d+(\.\d+)?$/.test(first)) { quantity = Number(first); used = 1; const next = tokens[1]; if (next && /^\d+\/\d+$/.test(next)) { const [n, d] = next.split('/').map(Number); if (d) { quantity += n / d; used = 2; } } }
   else if (first && /^\d+\/\d+$/.test(first)) { const [n, d] = first.split('/').map(Number); if (d) { quantity = n / d; used = 1; } }
-  else if (first && /^\d+(\.\d+)?[a-z]+$/.test(first)) { return null; } // "100g" handled by splitting first
-  else if (first in NUMBER_WORDS) { quantity = NUMBER_WORDS[first]; used = 1; if (first === 'half' && tokens[1] === 'a') used = 2; if (first === 'a' && tokens[1] === 'half') { quantity = 0.5; used = 2; } if (first === 'one' && tokens[1] === 'and' && tokens[2] === 'half') { quantity = 1.5; used = 3; } }
+  else if (first && /^\d+(\.\d+)?[a-z]+$/.test(first)) { return null; }  else if (first in NUMBER_WORDS) { quantity = NUMBER_WORDS[first]; used = 1; if (first === 'half' && tokens[1] === 'a') used = 2; if (first === 'a' && tokens[1] === 'half') { quantity = 0.5; used = 2; } if (first === 'one' && tokens[1] === 'and' && tokens[2] === 'half') { quantity = 1.5; used = 3; } }
   return quantity == null ? null : [quantity, used];
 }
 
-/** Parse one comma-separated item into { text, quantity, unit, foodText }. */
 export function parseItem(text) {
   let tokens = normalise(text).replace(/(\d)([a-z])/g, '$1 $2').replace(/(\d+)\s*x\s+/g, '$1 piece ').split(' ').filter(Boolean);
   const original = text.trim();
@@ -137,7 +131,7 @@ export function parseItem(text) {
   if (parsed) { quantity = parsed[0]; tokens = tokens.slice(parsed[1]); explicitQuantity = true; }
   for (const [phrase, canonicalUnit] of UNIT_PHRASES) if (tokens.slice(0, 2).join(' ') === phrase) { unit = canonicalUnit; tokens = tokens.slice(2); }
   if (!unit && tokens.length && unitLookup.has(tokens[0]) && tokens.length > 1) { unit = unitLookup.get(tokens[0]); tokens = tokens.slice(1); if (tokens[0] === 'of') tokens = tokens.slice(1); }
-  // Trailing quantity and unit: "roti 2", "rice 1 cup", "dal (150 g)".
+  // trailing quantity/unit ("rice 1 cup")
   if (!explicitQuantity && tokens.length > 1) {
     const tail = tokens.slice(-2);
     const q = parseQuantity(tail);
@@ -148,12 +142,11 @@ export function parseItem(text) {
   return { text: original, quantity, unit, explicitQuantity, foodText: tokens.join(' ') };
 }
 
-/** Split "dal chawal" into ["dal", "chawal"] when every part is an exact food name; otherwise return the phrase whole. */
+// "dal chawal" -> ["dal", "chawal"] when every part is a known food
 export function splitCompound(phrase, catalog = foods) {
   const tokens = canonical(normalise(phrase)).split(' ').filter(Boolean);
   if (tokens.length < 2 || tokens.length > 5) return [phrase];
   const exact = text => matchFood(text, catalog)[0]?.score === 1;
-  // Fewest parts wins; parts are consecutive token groups.
   const best = new Array(tokens.length + 1).fill(null);
   best[0] = [];
   for (let end = 1; end <= tokens.length; end++) {
@@ -168,10 +161,7 @@ export function splitCompound(phrase, catalog = foods) {
   return best[tokens.length] && best[tokens.length].length > 1 ? best[tokens.length] : [phrase];
 }
 
-/**
- * Parse a free-text meal description into matched items with gram weights and nutrition.
- * Always returns whatever could be matched (for a live estimate) plus the items that could not.
- */
+// parse a meal description into items + totals (partial results allowed)
 export function parseMeal(text, catalog = foods) {
   const parts = String(text || '').split(/[,;\n+]+|\band\b|\bwith\b|\bplus\b|&/i).map(part => part.trim()).filter(Boolean);
   const items = [], unmatched = [];
@@ -180,7 +170,6 @@ export function parseMeal(text, catalog = foods) {
     const item = parseItem(part);
     if (!item.foodText) { unmatched.push({ text: part, reason: 'Say what the food is.' }); continue; }
     const candidates = matchFood(item.foodText, catalog);
-    // "dal chawal", "rajma rice": a compound of exact food names becomes one item per food.
     const pieces = candidates[0]?.score === 1 ? [[item.foodText, candidates]] : splitCompound(item.foodText, catalog).map(text => [text, matchFood(text, catalog)]);
     if (!pieces.length || !pieces[0][1].length) { unmatched.push({ text: part, reason: `“${item.foodText}” is not in the food list yet.` }); continue; }
     for (const [text, ranked] of pieces) {
@@ -197,7 +186,7 @@ export function parseMeal(text, catalog = foods) {
   return { items, unmatched, totals: items.length ? Object.fromEntries(nutrients.map(key => [key, round(totals[key])])) : null, complete: items.length > 0 && unmatched.length === 0 };
 }
 
-/** Strict variant used by tests and imports: a partial meal is never presented as a complete estimate. */
+// strict version: errors => no totals
 export function estimateMeal(text, catalog = foods) {
   const lines = String(text || '').split(/[,;\n]+/).map(line => line.trim()).filter(Boolean);
   if (!lines.length) return { errors: ['Enter at least one ingredient and its quantity.'], matches: [], totals: null };
@@ -206,7 +195,6 @@ export function estimateMeal(text, catalog = foods) {
   return { errors, matches: result.items.map(item => ({ name: item.name, grams: item.grams, fdcId: item.fdcId, foodId: item.foodId, source: item.source })), totals: errors.length ? null : result.totals };
 }
 
-/** Totals for an explicit list of items (after the user has corrected foods or units). */
 export function totalsFor(items) {
   if (!items.length) return null;
   const totals = Object.fromEntries(nutrients.map(key => [key, 0]));
@@ -214,7 +202,6 @@ export function totalsFor(items) {
   return Object.fromEntries(nutrients.map(key => [key, round(totals[key])]));
 }
 
-/** Re-price one parsed item after the user changed its food, unit or quantity. */
 export function repriceItem(item, { foodId = item.foodId, unit = item.unit, quantity = item.quantity } = {}, catalog = foods) {
   const food = catalog.find(candidate => candidate.id === foodId) || item.food;
   if (!food) return null;
@@ -226,7 +213,7 @@ export function repriceItem(item, { foodId = item.foodId, unit = item.unit, quan
 
 export const unitsFor = food => Object.keys({ ...(food?.units || {}), g: 1 }).filter(unit => unit !== 'ml' || food?.units?.ml);
 
-/** Distinct recently logged meals, newest first, for one-tap re-logging. */
+// distinct recent meals, newest first
 export function recentMeals(meals = [], limit = 8) {
   const seen = new Set(), out = [];
   for (const meal of [...meals].sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')) || String(b.createdAt || '').localeCompare(String(a.createdAt || '')))) {

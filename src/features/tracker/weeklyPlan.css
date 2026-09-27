@@ -56,7 +56,7 @@
 @media(max-width:950px){.plan-adherence{display:block}}
 @media(max-width:720px){.today-plan{flex-direction:column;align-items:flex-start}}
 @media(max-width:380px){.plan-day{min-height:0}}
-/* Dark theme: restate the tinted surfaces using the shared tokens from theme.css. */
+/* dark theme */
 [data-theme="dark"] .plan-day{border-top-color:#3a463e}
 [data-theme="dark"] .plan-day.is-today{background:var(--surface-2);border-top-color:var(--accent)}
 [data-theme="dark"] .plan-day.is-today .plan-day-heading strong{color:var(--accent)}

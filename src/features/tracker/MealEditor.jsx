@@ -7,11 +7,7 @@ import './mealTools.css';
 const labels = { calories: 'Calories (kcal)', protein: 'Protein (g)', carbs: 'Carbs (g)', fat: 'Fat (g)' };
 const sortedCatalog = [...foodCatalog].sort((a, b) => a.name.localeCompare(b.name));
 
-/**
- * Meal and recipe editor. Type what you ate in plain words and the four nutrient fields fill in as you type;
- * the matched items are listed underneath so a wrong guess can be corrected (food, unit, quantity) or removed.
- * A nutrient field stops following the estimate the moment it is typed into, and can be re-attached.
- */
+// Meal / recipe form with live nutrition estimate from the description.
 export default function MealEditor({ initial = {}, recipe = false, busy, onSubmit, recent = [] }) {
   const editing = Boolean(initial.id);
   const [name, setName] = useState(initial.name || '');
@@ -19,7 +15,7 @@ export default function MealEditor({ initial = {}, recipe = false, busy, onSubmi
   const [date, setDate] = useState(initial.date || today());
   const [servings, setServings] = useState(recipe ? 1 : initial.servings || 1);
   const [base, setBase] = useState(() => perServing(initial));
-  // Which nutrient fields follow the live estimate. Existing entries keep their saved numbers until asked.
+  // fields that auto-fill from the estimate
   const [following, setFollowing] = useState(() => Object.fromEntries(nutrients.map(key => [key, !editing && initial.calories == null])));
   const [items, setItems] = useState(() => (initial.ingredientMatches || []).filter(item => item.foodId).map(item => repriceItem({ foodId: item.foodId, unit: item.unit, quantity: item.quantity }, {})).filter(item => item?.grams));
   const [unmatched, setUnmatched] = useState([]);
@@ -30,7 +26,7 @@ export default function MealEditor({ initial = {}, recipe = false, busy, onSubmi
   const anyFollowing = nutrients.some(key => following[key]);
   const count = recipe ? 1 : Number(servings) > 0 ? Number(servings) : 1;
 
-  // Live estimate: re-parse the description a moment after typing stops, unless the item list was hand-edited.
+  // debounce parse
   useEffect(() => {
     if (manualItems || name.trim() === parsedText) return undefined;
     clearTimeout(timer.current);
@@ -41,7 +37,6 @@ export default function MealEditor({ initial = {}, recipe = false, busy, onSubmi
     return () => clearTimeout(timer.current);
   }, [name, parsedText, manualItems]);
 
-  // Following fields take the estimate; the estimate describes what was eaten, so per-serving values divide by the count.
   const estimate = useMemo(() => totalsFor(items), [items]);
   useEffect(() => {
     if (!anyFollowing) return;
@@ -85,9 +80,9 @@ export default function MealEditor({ initial = {}, recipe = false, busy, onSubmi
   }
 
   return <form className="entry-form meal-editor" onSubmit={submit}>
-    <label className="field"><span>{recipe ? 'Recipe name — or what goes in one serving' : 'What did you eat?'}</span>
+    <label className="field"><span>{recipe ? 'Recipe name or ingredients for one serving' : 'What did you eat?'}</span>
       <input required maxLength={200} autoFocus={!editing} placeholder={recipe ? 'e.g. 2 roti, 1 katori dal, salad' : 'e.g. 2 roti, 1 katori dal, half cup rice'} value={name} onChange={event => setName(event.target.value)} />
-      <small className="field-note">Write it the way you’d say it — quantities and measures like cup, katori, glass, tbsp or grams are understood, and it adds up as you type.</small>
+      <small className="field-note">Quantities and measures like cup, katori, glass, tbsp or grams are understood. Nutrition is calculated as you type.</small>
     </label>
     {!editing && recent.length > 0 && <div className="recent-meals" aria-label="Recent meals"><History size={14} />{recent.map(meal => <button type="button" key={meal.id || meal.name} className="recent-chip" onClick={() => applyRecent(meal)} title={`${meal.calories} kcal`}>{meal.name}</button>)}</div>}
     <div className="form-grid"><label className="field"><span>Meal</span><select value={type} onChange={event => setType(event.target.value)}>{['Breakfast', 'Lunch', 'Dinner', 'Snack'].map(item => <option key={item}>{item}</option>)}</select></label>
@@ -100,13 +95,13 @@ export default function MealEditor({ initial = {}, recipe = false, busy, onSubmi
         <input type="number" min="0.1" step="0.5" aria-label={`Quantity of ${item.name}`} value={item.quantity} onChange={event => editItem(index, { quantity: event.target.value })} />
         <select aria-label={`Measure for ${item.name}`} value={item.unit} onChange={event => editItem(index, { unit: event.target.value })}>{[...new Set([...unitsFor(item.food), item.unit])].map(unit => <option key={unit} value={unit}>{unit}</option>)}</select>
         <select aria-label={`Food matched for “${item.text}”`} value={item.foodId} onChange={event => editItem(index, { foodId: event.target.value })}>{sortedCatalog.map(food => <option key={food.id} value={food.id}>{food.name}</option>)}</select>
-        <span className="estimate-grams">{item.grams} g · {Math.round(item.nutrition.calories)} kcal{item.confidence < 0.7 && <em title="Best guess — check the food"> · guess</em>}</span>
+        <span className="estimate-grams">{item.grams} g · {Math.round(item.nutrition.calories)} kcal{item.confidence < 0.7 && <em title="Best guess, check the food"> · guess</em>}</span>
         <button type="button" className="icon-button" aria-label={`Remove ${item.name}`} onClick={() => removeItem(index)}><X size={14} /></button>
       </li>)}</ul>
-      {unmatched.map(item => <p key={item.text} className="estimate-unmatched"><AlertCircle size={13} />“{item.text}” — {item.reason} Its nutrition is not counted; type the values below or rephrase it.</p>)}
+      {unmatched.map(item => <p key={item.text} className="estimate-unmatched"><AlertCircle size={13} />“{item.text}”: {item.reason} Not counted in the total. Enter the values below or rephrase it.</p>)}
       <div className="estimate-actions">
         {(manualItems || !anyFollowing) && <button type="button" className="text-link" onClick={reestimate}><RotateCcw size={13} />Re-estimate from the description</button>}
-        <details><summary>Foods it knows ({foodCatalog.length})</summary><ul className="supported-foods">{sortedCatalog.map(food => <li key={food.id}>{food.name} <small>— {food.aliases.slice(0, 3).join(', ')}</small></li>)}</ul></details>
+        <details><summary>Foods it knows ({foodCatalog.length})</summary><ul className="supported-foods">{sortedCatalog.map(food => <li key={food.id}>{food.name} <small>({food.aliases.slice(0, 3).join(', ')})</small></li>)}</ul></details>
       </div>
     </div>}
     {editing && !items.length && !anyFollowing && <button type="button" className="text-link" onClick={reestimate}><Sparkles size={13} />Estimate nutrition from the description</button>}

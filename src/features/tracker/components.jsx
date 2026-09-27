@@ -20,14 +20,13 @@ export function Field({ label, ...props }) { return <label className="field"><sp
 function Select({ label, children, ...props }) { return <label className="field"><span>{label}</span><select {...props}>{children}</select></label>; }
 export function EntryForm({ type, initial = {}, onSubmit, busy, bodyWeight = null, onDraftChange }) {
   const isMeal = type === 'meal', custom = type === 'custom', weight = type === 'weight';
-  // Activity calories follow the duration and category until they are typed over.
+  // calories auto-estimated until edited
   const [minutes, setMinutes] = useState(initial.durationMinutes || '');
   const [category, setCategory] = useState(initial.category || 'Strength');
   const [calories, setCalories] = useState(String(initial.calories ?? 0));
   const [typedCalories, setTypedCalories] = useState(initial.calories != null);
   const [editedEntries, setEditedEntries] = useState(initial.entries || []);
   const formRef = useRef(null);
-  // Capture calculated values after React updates the controlled inputs too.
   useEffect(() => {
     if (onDraftChange && formRef.current) onDraftChange(Object.fromEntries(new FormData(formRef.current)));
   }, [minutes, category, calories, onDraftChange]);
@@ -41,7 +40,7 @@ export function EntryForm({ type, initial = {}, onSubmit, busy, bodyWeight = nul
               <input name="calories" type="number" min="0" max="15000" required value={calories}
                 onChange={e => { setTypedCalories(true); setCalories(e.target.value); }} />
               <small className="field-note">{typedCalories ? 'Your saved or entered calorie value is kept. You can change it here.' : estimate !== null
-                ? `Estimated for ${minutes} minutes at ${bodyWeight.weight} kg${bodyWeight.source === 'profile' ? ' from your profile' : ''}. It is an average, not a measurement — type over it if you tracked your own.`
+                ? `Estimated for ${minutes} minutes at ${bodyWeight.weight} kg${bodyWeight.source === 'profile' ? ' from your profile' : ''}. This is an average. Type over it if you tracked your own.`
                 : bodyWeight ? 'Add a duration and this will be estimated for you.'
                 : 'Record your weight on the Progress page and these will be estimated for you.'}</small>
             </label>)}{isMeal && ['protein','carbs','fat'].map(key=><Field key={key} label={`${key[0].toUpperCase()+key.slice(1)} (g, optional)`} name={key} type="number" step="0.1" min="0" max="2000" defaultValue={initial[key] ?? ''} />)}</div>{custom && <div className="form-grid"><Select label="Difficulty" name="difficulty" defaultValue={initial.difficulty || "Beginner"}>{["Beginner", "Intermediate", "Advanced"].map(value => <option key={value}>{value}</option>)}</Select><Field label="Equipment" name="equipment" maxLength={200} defaultValue={initial.equipment || ""} placeholder="e.g. Dumbbells, bench, or none" /></div>}{custom && <label className="field"><span>Exercises (one per line)</span><textarea name="exercises" rows="5" defaultValue={Array.isArray(initial.exercises) ? initial.exercises.map(e => typeof e === 'string' ? e : e.name).join('\n') : initial.exercises || ''} maxLength={2000} placeholder={'Warm-up · 5 minutes\nSquat · 3 × 10'} required /></label>}{!isMeal && <label className="field"><span>{custom ? "Instructions (optional)" : "Session notes (optional)"}</span><textarea name="notes" rows="2" maxLength={1000} defaultValue={initial.notes || ""} placeholder={custom ? "Rest periods or exercise variations" : "Weights, reps, or how the session went"} /></label>}</>}{initial.entries?.length > 0 && <fieldset className="field"><legend>Recorded sets</legend><ExerciseChecklist checked={editedEntries.map((_, i) => i)} exercises={editedEntries.map(entry => entry.name)} sets={Object.fromEntries(editedEntries.map((entry, i) => [i, entry.sets]))} onSetsChange={(i, next) => setEditedEntries(current => current.map((entry, index) => index === i ? { ...entry, sets: next } : entry))} /></fieldset>}<div className="modal-actions"><button type="submit" className="button primary" disabled={busy}><Check size={17} />{busy ? 'Saving…' : initial.id ? 'Save changes' : custom ? 'Create workout' : weight ? 'Save weight' : 'Save entry'}</button></div></form>;
@@ -58,7 +57,7 @@ export function WorkoutSession({ plan, busy, onComplete, sessions = [], bodyWeig
   useEffect(() => { if (!running) return; const t = setInterval(() => setElapsed(accumulated.current + Math.floor((Date.now() - startedAt.current) / 1000)), 250); return () => clearInterval(t); }, [running]);
   function toggle() { if (running) { accumulated.current += Math.floor((Date.now() - startedAt.current) / 1000); setElapsed(accumulated.current); } else { startedAt.current = Date.now(); setStarted(true); } setRunning(!running); }
   const exercises = Array.isArray(plan.exercises) ? plan.exercises : String(plan.exercises || '').split(',');
-  // Each line is matched to the exercise library so sets carry a stable identity.
+  // match lines to the exercise library for a stable slug
   const named = exercises.map(entry => {
     const art = findExerciseArt(entry);
     const raw = typeof entry === 'string' ? entry : entry?.name;

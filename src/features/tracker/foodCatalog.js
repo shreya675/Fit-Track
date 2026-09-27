@@ -1,13 +1,5 @@
-// Built-in food catalog. Values are per 100 g as eaten (cooked where the name says cooked), kcal and grams.
-//
-// Sources: entries with an `fdcId` are USDA FoodData Central Foundation Foods (April 2026, CC0), reported energy
-// preferred. Entries marked `source: 'IFCT'` are typical values for Indian dishes taken from the Indian Food
-// Composition Tables (NIN, 2017) and common recipe compositions; entries marked `source: 'USDA SR'` are typical
-// values from USDA SR Legacy. Home-cooked dishes vary a lot with oil, sugar and portion, so treat every number
-// as an approximation — the meal editor says so and every value stays editable.
-//
-// `units` gives grams for one of each household measure the food is usually described in; `unit` is the one
-// assumed when the user gives a number without a measure ("2 roti"). ml is treated as g for drinks.
+// Food catalog, values per 100 g. Sources: USDA FoodData Central (fdcId), USDA SR Legacy, IFCT 2017 (Indian dishes, approximate).
+// units = grams per household measure, unit = default measure for a bare count.
 const f = (id, name, aliases, calories, protein, carbs, fat, units, unit, source, fdcId) =>
   ({ id, name, aliases, calories, protein, carbs, fat, units, unit, source, ...(fdcId ? { fdcId } : {}) });
 

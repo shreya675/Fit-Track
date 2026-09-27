@@ -34,12 +34,12 @@ export default function App() {
 
   async function exploreDemo() {
     if (currentUser) await logout();
-    try { sessionStorage.setItem('fittrack.demo.active', 'true'); } catch { /* Still usable for this visit. */ }
+    try { sessionStorage.setItem('fittrack.demo.active', 'true'); } catch { /* ignore */ }
     setDemoActive(true);
     navigate('/dashboard');
   }
   function leaveDemo() {
-    try { sessionStorage.removeItem('fittrack.demo.active'); } catch { /* In-memory state still resets. */ }
+    try { sessionStorage.removeItem('fittrack.demo.active'); } catch { /* ignore */ }
     setDemoActive(false);
     navigate('/login');
   }

@@ -1,5 +1,4 @@
-// Numbers derived from logged sets and body-weight readings.
-// Pure functions with no React or Firebase, so they can be unit tested directly.
+// Stats from logged sets and body-weight readings.
 
 const num = value => {
   const parsed = Number(value);
@@ -8,11 +7,10 @@ const num = value => {
 const isDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value || '');
 const plainName = entry => String(entry?.name || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 const key = entry => entry?.slug || plainName(entry);
-/** The same exercise may be stored with a slug in one session and only a name in another. */
+// key by slug, else by name
 const sameExercise = (a, b) =>
   (a?.slug && a.slug === b?.slug) || (!!plainName(a) && plainName(a) === plainName(b)) || key(a) === key(b);
 
-/** A set counts once it has repetitions. Weight stays optional for bodyweight work. */
 export const isLoggedSet = set => num(set?.reps) > 0;
 export const setVolume = set => (isLoggedSet(set) ? num(set.weight) * num(set.reps) : 0);
 export const entryVolume = entry => (entry?.sets || []).reduce((total, set) => total + setVolume(set), 0);
@@ -20,7 +18,6 @@ export const sessionVolume = session => (session?.entries || []).reduce((total, 
 export const sessionSets = session =>
   (session?.entries || []).reduce((total, entry) => total + (entry.sets || []).filter(isLoggedSet).length, 0);
 
-/** The heaviest set, breaking ties on repetitions. Null when nothing was logged. */
 export function bestSet(sets = []) {
   return sets.filter(isLoggedSet).reduce((best, set) => {
     if (!best) return set;
@@ -32,10 +29,7 @@ export function bestSet(sets = []) {
 const heavier = (a, b) =>
   num(a.weight) !== num(b.weight) ? num(a.weight) > num(b.weight) : num(a.reps) > num(b.reps);
 
-/**
- * One row per exercise that has ever been logged with sets, newest session first
- * within each row. Sessions without a usable date are ignored.
- */
+// one row per exercise, newest session first
 export function exerciseLog(sessions = []) {
   const log = new Map();
   for (const session of sessions) {
@@ -72,14 +66,12 @@ export function exerciseLog(sessions = []) {
   }).sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** Best set per exercise, heaviest first, for the personal records table. */
 export function personalRecords(sessions = []) {
   return exerciseLog(sessions)
     .map(row => ({ key: row.key, slug: row.slug, name: row.name, totalSets: row.totalSets, ...row.best }))
     .sort((a, b) => b.weight - a.weight || b.reps - a.reps || a.name.localeCompare(b.name));
 }
 
-/** The sets recorded the last time this exercise was done, for a repeat prompt. */
 export function lastSetsFor(sessions = [], exercise) {
   if (!key(exercise)) return [];
   const dated = sessions.filter(session => isDate(session?.date)).sort((a, b) => b.date.localeCompare(a.date));
@@ -91,9 +83,9 @@ export function lastSetsFor(sessions = [], exercise) {
   return [];
 }
 
-// ---------------------------------------------------------------- body weight
+// ---- body weight ----
 
-/** Readings oldest first, one per day, with the latest entry for a day winning. */
+// one reading per day, latest wins
 export function weightSeries(measurements = []) {
   const byDate = new Map();
   const timestamps = new Map();
@@ -102,8 +94,6 @@ export function weightSeries(measurements = []) {
     const raw = item.updatedAt || item.createdAt;
     const timestamp = raw?.toMillis?.() ?? (raw?.seconds != null ? raw.seconds * 1000 : Date.parse(raw));
     const rank = Number.isFinite(timestamp) ? timestamp : 0;
-    // Timestamped readings win regardless of local prepend or Firestore document order.
-    // Legacy readings have no known creation time: preserve their existing fallback.
     if (byDate.has(item.date) && rank < timestamps.get(item.date)) continue;
     timestamps.set(item.date, rank);
     byDate.set(item.date, { date: item.date, weight: num(item.weight) });
@@ -113,10 +103,7 @@ export function weightSeries(measurements = []) {
 
 export const latestWeight = measurements => weightSeries(measurements).slice(-1)[0] || null;
 
-/**
- * Change between the most recent reading and the earliest one still inside the
- * window. Null until there are two readings far enough apart to compare.
- */
+// change over the window, null until two readings
 export function weightChange(measurements = [], days = 30) {
   const series = weightSeries(measurements);
   if (series.length < 2) return null;

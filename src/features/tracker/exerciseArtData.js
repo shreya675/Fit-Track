@@ -1,7 +1,4 @@
-// Generated exercise artwork: slug -> display name, form cues, and the
-// demonstration photographs from the free-exercise-db dataset where one exists.
-// `photo` lists frames in order (start .. finish) relative to PHOTO_BASE.
-// Drawings in public/images/exercises/<slug>.svg cover the rest.
+// Exercise data: slug -> name, cues, photo frames (free-exercise-db) or drawing in public/images/exercises.
 export const exerciseArt = {
  "walk": {
   "name": "Easy walk",
@@ -828,7 +825,7 @@ export const exerciseArt = {
  }
 };
 
-// Extra wording used in the workout plans, mapped onto the artwork above.
+// aliases used in workout plans
 export const aliases = {
  "easy walk": "walk",
  "brisk walk": "walk",

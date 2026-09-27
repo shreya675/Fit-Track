@@ -7,7 +7,6 @@ import './nutritionPanels.css';
 const number = value => Number(value || 0).toLocaleString();
 const macroLabel = { protein: 'Protein', carbs: 'Carbs', fat: 'Fat' };
 
-/** Daily energy and the three macro cards, each against its target. */
 export function MacroCards({ meals, burned = 0, targets }) {
   const intake = dayIntake(meals);
   const split = macroSplit(intake);
@@ -30,7 +29,6 @@ export function MacroCards({ meals, burned = 0, targets }) {
   </div>;
 }
 
-/** Seven-day view of calories eaten against the target, with activity calories alongside. */
 export function NutritionWeek({ data, date, onPickDate }) {
   const week = weekIntake(data, date);
   const start = dayjs(week.days[0].date), end = dayjs(week.days[6].date);

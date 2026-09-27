@@ -1,14 +1,13 @@
 import dayjs from 'dayjs';
 import { plans as library, today } from './data.js';
 
-// A weekly plan is a template keyed by weekday; it repeats every week.
+// weekly plan: { mon: [routineId], ... }
 export const weekdays = [['mon', 'Monday'], ['tue', 'Tuesday'], ['wed', 'Wednesday'], ['thu', 'Thursday'], ['fri', 'Friday'], ['sat', 'Saturday'], ['sun', 'Sunday']];
 export const MAX_PER_DAY = 3;
 const keys = weekdays.map(([key]) => key);
 const iso = value => value.format('YYYY-MM-DD');
 
 export function weekdayKey(date) { return keys[(dayjs(date).day() + 6) % 7]; }
-// Monday to Sunday of the week containing the date.
 export function weekDates(date = today()) {
   const start = dayjs(date).subtract((dayjs(date).day() + 6) % 7, 'day');
   return keys.map((_, i) => iso(start.add(i, 'day')));
@@ -30,7 +29,7 @@ export function removeRoutine(plan, day, id) {
   return { ...current, [day]: current[day].filter(value => value !== id) };
 }
 export function allRoutines(data) { return [...library, ...(data.customPlans || [])]; }
-// Timed sessions keep the routine ID; manual logs are matched by title.
+// match by planId, else by title
 const matches = (session, routine) => session.planId ? session.planId === routine.id : session.title === routine.title;
 
 export function weeklyAdherence(data, date = today(), current = today()) {
@@ -38,7 +37,7 @@ export function weeklyAdherence(data, date = today(), current = today()) {
   const days = weekDates(date).map((day, i) => {
     const sessions = data.sessions.filter(s => s.date === day);
     const used = new Set();
-    // Each logged session can satisfy only one planned slot, and unknown IDs (a deleted custom routine) are skipped.
+    // one session fills one slot
     const planned = plan[keys[i]].map(id => routines.find(r => r.id === id)).filter(Boolean).map(routine => {
       const session = sessions.find(s => !used.has(s) && matches(s, routine));
       if (session) used.add(session);
@@ -68,7 +67,7 @@ export function longestStreak(sessions) {
 }
 
 export const heatLevel = minutes => minutes <= 0 ? 0 : minutes < 20 ? 1 : minutes < 40 ? 2 : minutes < 60 ? 3 : 4;
-// Columns are Monday-to-Sunday weeks ending with the week of the date, oldest first.
+// weeks oldest first
 export function activityCalendar(sessions, { weeks = 16, date = today() } = {}) {
   const end = dayjs(weekDates(date)[6]);
   const minutes = {};

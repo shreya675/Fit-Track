@@ -8,7 +8,7 @@
     <meta name="description" content="Make room for everyday movement. Track workouts, meals, hydration, and personal goals in one calm fitness workspace." />
     <title>FitTrack · Your everyday fitness workspace</title>
     <script>
-      // Apply the saved or system colour theme before the first paint so there is no light flash.
+      // set theme before first paint
       try {
         var saved = localStorage.getItem('fittrack.theme');
         var dark = saved === 'dark' || (saved !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);

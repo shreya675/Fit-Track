@@ -3,11 +3,7 @@ import { readPreference, resolveTheme, themeColor, toggledPreference, writePrefe
 
 const query = () => (typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null);
 
-/**
- * Applies the colour theme to <html data-theme> and keeps it in step with the system setting.
- * The preference is a device setting, like a rest-timer length: it lives in this browser, not the account,
- * so switching devices never surprises anyone with a theme they chose somewhere else.
- */
+// Sets <html data-theme> and follows the system setting when preference is "system".
 export default function useTheme() {
   const [preference, setPreferenceState] = useState(() => readPreference(typeof localStorage === 'undefined' ? null : localStorage));
   const [systemDark, setSystemDark] = useState(() => Boolean(query()?.matches));

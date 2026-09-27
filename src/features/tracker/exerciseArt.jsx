@@ -6,10 +6,7 @@ import './exerciseArt.css';
 
 export { exerciseArt, findExerciseArt, findPlanArt, exerciseArtUrl, exercisePhotoUrl, mainPhoto } from './exerciseArtMatch.js';
 
-/**
- * A demonstration photograph where the dataset has one. Where it does not, a plain
- * tile rather than a picture of some other exercise, which would be worse than none.
- */
+// photo if the dataset has one, else a plain tile
 export function ExerciseArtImage({ art, className = '', alt, frame }) {
   const photo = frame || mainPhoto(art);
   const [failed, setFailed] = useState(false);
@@ -23,7 +20,7 @@ export function ExerciseArtImage({ art, className = '', alt, frame }) {
 const describeSets = sets =>
   sets.map(set => (Number(set.weight) > 0 ? `${set.weight} kg × ${set.reps}` : `${set.reps} reps`)).join(', ');
 
-/** Weight and repetitions for one exercise. Weight is left blank for bodyweight work. */
+// per-set weight and reps
 function SetLog({ name, sets, lastSets, onChange }) {
   const update = (index, field, value) =>
     onChange(sets.map((set, i) => (i === index ? { ...set, [field]: value } : set)));
@@ -59,7 +56,6 @@ function SetLog({ name, sets, lastSets, onChange }) {
   </div>;
 }
 
-/** One checklist line: tick box, thumbnail, set log, and an expandable how-to panel. */
 function ExerciseItem({ label, index, checked, onToggle, sets, lastSets, onSetsChange }) {
   const [open, setOpen] = useState(false);
   const panelId = `${useId()}howto`;

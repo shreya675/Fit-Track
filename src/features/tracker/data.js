@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
 export const today = () => dayjs().format('YYYY-MM-DD');
-export const defaults = { name: 'Alex Morgan', fitnessGoal: 'Build a consistent routine', trainingFocus: 'A balanced mix', equipment: [], dismissedExerciseIds: [], dailyWorkout: 60, dailySteps: 8000, dailyCalories: 500, nutritionGoal: 2200, waterGoal: 8, weeklySessions: 4, weeklyPlan: {} };
+export const defaults = { name: 'Priya Sharma', fitnessGoal: 'Build a consistent routine', trainingFocus: 'A balanced mix', equipment: [], dismissedExerciseIds: [], dailyWorkout: 60, dailySteps: 8000, dailyCalories: 500, nutritionGoal: 2200, waterGoal: 8, weeklySessions: 4, weeklyPlan: {} };
 export const plans = [
   { id: 'bodyweight-basics', title: 'Bodyweight circuit', category: 'Strength', durationMinutes: 25, difficulty: 'Beginner', equipment: 'No equipment', description: 'A simple home session using bodyweight movements.', exercises: ['March in place · 3 minutes', 'Bodyweight squat · 2 × 10', 'Wall push-up · 2 × 10', 'Glute bridge · 2 × 12', 'Bird dog · 2 × 8 each side', 'Easy walk and stretch · 3 minutes'], notes: 'Rest between sets as needed. Use a comfortable range of motion.' },
   { id: 'lower-body', title: 'Lower body strength', category: 'Strength', durationMinutes: 35, difficulty: 'Intermediate', equipment: 'Dumbbells · Exercise mat', description: 'A lower-body routine covering squats, hinges, and single-leg work.', exercises: ['Easy walk and bodyweight warm-up · 5 minutes', 'Goblet squat · 3 × 10', 'Dumbbell Romanian deadlift · 3 × 10', 'Reverse lunge · 2 × 8 each side', 'Standing calf raise · 3 × 12', 'Cool-down · 5 minutes'], notes: 'Choose a weight you can control. Rest 60–90 seconds between sets.' },
@@ -19,7 +19,7 @@ export const plans = [
   { id: 'core', title: 'Core foundations', category: 'Strength', durationMinutes: 15, difficulty: 'Beginner', equipment: 'Exercise mat', description: 'Short, simple, and easy to make a habit.', exercises: ['Warm-up · 3 minutes', 'Dead bug · 3 × 10', 'Bird dog · 3 × 10 each side', 'Side plank · 3 × 20 seconds each side'] },
 ];
 
-// Sample strength logs so the records and progress panels have something to show.
+// sample set logs for the demo
 function sampleEntries(index) {
   const step = Math.floor(index / 3);
   return [
@@ -55,14 +55,10 @@ export function summarize(data, date = today()) {
   return { week, weekSessions, streak, sessions, meals, minutes: sessions.reduce((n, s) => n + Number(s.durationMinutes || 0), 0), burned: sessions.reduce((n, s) => n + Number(s.calories || 0), 0), eaten: meals.reduce((n, s) => n + Number(s.calories || 0), 0), water: data.water[date] || 0, steps: data.steps[date] || 0 };
 }
 
-/**
- * The sample workspace is generated relative to the day it is first saved. Loaded again weeks later, every
- * sample session would be in the past and the Overview would read zero, so a saved demo is shifted forward
- * to today on load. Entries the visitor added move with it; a workspace that is not the demo is untouched.
- */
+// Shift a saved demo workspace so its dates are relative to today.
 export function reanchorDemo(data, date = today()) {
   if (!data?.demo) return data;
-  // Demos saved before the stamp existed are anchored on their newest sample session.
+  // older demos: anchor on the newest sample session
   const anchor = data.demoDate || (data.sessions || []).filter(row => String(row.id).startsWith('sample-')).map(row => row.date).sort().pop();
   if (!anchor || anchor === date) return data;
   const offset = dayjs(date).diff(dayjs(anchor), 'day');
