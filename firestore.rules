@@ -9,6 +9,9 @@ service cloud.firestore {
       match /workoutSessions/{sessionId} {
         allow read, write: if ownsAccount(userId);
       }
+      match /savedMeals/{recipeId} {
+        allow read, write: if ownsAccount(userId);
+      }
       match /meals/{mealId} {
         allow read, write: if ownsAccount(userId);
       }
